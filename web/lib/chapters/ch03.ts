@@ -10,6 +10,45 @@ export const ch03: ChapterDef = {
   designPatterns: ["Agent Loop", "Tool Use"],
   intro: "A LangGraph agent is a state machine. You define nodes (LLM calls, tool execution) and edges (conditional routing based on whether the model wants to call a tool or return a final answer). MessagesState tracks the conversation, and ToolNode handles tool dispatch automatically.",
   takeaway: "The agent graph pattern — model node → should_continue → tool node → loop back — is the fundamental architecture of every LangGraph agent. Master this and everything else is an extension.",
+  codeFilename: "agent_graph.py",
+  codeContent: `from langgraph.graph import StateGraph, START, END
+from langgraph.graph import MessagesState
+from langgraph.prebuilt import ToolNode
+
+
+def agent(state: MessagesState):
+    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+
+
+def should_continue(state: MessagesState):
+    last_message = state["messages"][-1]
+    if last_message.tool_calls:
+        return "tools"
+    return END
+
+
+graph = StateGraph(MessagesState)
+
+graph.add_node("agent", agent)
+graph.add_node("tools", ToolNode(tools))
+
+graph.add_edge(START, "agent")
+graph.add_conditional_edges("agent", should_continue, ["tools", END])
+graph.add_edge("tools", "agent")
+
+app = graph.compile()
+print("Graph compiled")`,
+  aiExchange: {
+    userMessage: "Build the agent graph with conditional tool routing.",
+    aiLabel: "COMPILING GRAPH",
+    aiDescription: "Wiring StateGraph with agent node, ToolNode, and conditional edges. The should_continue function routes to tools or END...",
+    aiCodeSnippet: `graph.add_edge(START, "agent")
+graph.add_conditional_edges(
+    "agent", should_continue, ["tools", END]
+)
+graph.add_edge("tools", "agent")
+app = graph.compile()`,
+  },
   demos: [
     {
       id: "conditional-routing",
