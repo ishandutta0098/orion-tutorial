@@ -10,6 +10,45 @@ export const ch04: ChapterDef = {
   designPatterns: ["Tool Use"],
   intro: "Now that the agent has tools and a graph, it's time for the first real task: generating Python code from a natural language description and writing it to disk. The agent decides which file operations to use, generates the code, and persists the result — all through the tool-calling loop.",
   takeaway: "Code generation is just tool use with a purpose. The agent generates content via the LLM and persists it via write_file — the same pattern scales to any generative task.",
+  codeFilename: "code_generation.py",
+  codeContent: `from langchain_core.messages import HumanMessage
+
+# Task: Generate a Python file via the agent
+result = app.invoke({
+    "messages": [
+        HumanMessage(
+            content="""Create a Python file 'generated/calculator.py' with:
+- A Calculator class
+- Methods: add, subtract, multiply, divide
+- Each method should record operations in a history list
+- A get_history() method to retrieve past operations"""
+        )
+    ]
+})
+
+# Print what happened
+for msg in result["messages"]:
+    print(f"{msg.type}: {msg.content[:100] if msg.content else ''}")
+    if hasattr(msg, "tool_calls") and msg.tool_calls:
+        for tc in msg.tool_calls:
+            print(f"  -> {tc['name']}({list(tc['args'].keys())})")
+
+# Verify the generated file
+print("\\n--- Generated File ---")
+print(open("generated/calculator.py").read())`,
+  aiExchange: {
+    userMessage: "Create a Calculator class with math methods and history tracking.",
+    aiLabel: "GENERATING CODE",
+    aiDescription: "Writing generated/calculator.py with Calculator class including add, subtract, multiply, divide methods...",
+    aiCodeSnippet: `class Calculator:
+    def __init__(self):
+        self.history = []
+
+    def add(self, a, b):
+        result = a + b
+        self.history.append(f"Added {a} + {b}")
+        return result`,
+  },
   demos: [
     {
       id: "code-gen-task",
