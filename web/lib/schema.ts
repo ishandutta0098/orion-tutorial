@@ -82,7 +82,13 @@ export type ChatMode =
   | "self-correction"
   | "reflection"
   | "rules-toggle"
-  | "inline-edit";
+  | "inline-edit"
+  | "codebase-search"
+  | "planner"
+  | "multi-agent-pipeline"
+  | "human-in-the-loop"
+  | "parallel-gen"
+  | "time-travel";
 
 export type ChatMessage = {
   role: "user" | "assistant" | "tool" | "system";
@@ -115,12 +121,19 @@ export type TaskOption = {
   description: string;
 };
 
+export type CheckpointOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
 export type ChatConfig = {
   mode: ChatMode;
   models?: ModelOption[];
   tools?: ToolOption[];
   systemPrompts?: SystemPromptOption[];
   tasks?: TaskOption[];
+  checkpoints?: CheckpointOption[];
   defaultPrompt?: string;
   conversations: Record<string, ChatMessage[]>;
   generatedFile?: { filename: string; content: string };

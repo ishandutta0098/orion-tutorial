@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield } from "lucide-react";
+import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield, Search, GitBranch, Users, Hand, Layers, Clock } from "lucide-react";
 import type { ChatConfig, ChatMessage } from "@/lib/schema";
 
 type Props = {
@@ -19,9 +19,11 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
     chatConfig.systemPrompts?.[0]?.id ?? null
   );
   const [selectedTask, setSelectedTask] = useState<string | null>(
-    chatConfig.tasks?.[0]?.id ?? null
+    chatConfig.tasks?.[0]?.id ?? chatConfig.checkpoints?.[0]?.id ?? null
   );
-  const [selectedToggle, setSelectedToggle] = useState<string>("raw");
+  const [selectedToggle, setSelectedToggle] = useState<string>(
+    chatConfig.mode === "human-in-the-loop" ? "approve" : "raw"
+  );
   const [toolStates, setToolStates] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     chatConfig.tools?.forEach((t) => { initial[t.id] = t.enabled; });
@@ -52,7 +54,10 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
       case "self-correction":
         return selectedTask ?? "default";
       case "rules-toggle":
+      case "human-in-the-loop":
         return selectedToggle;
+      case "time-travel":
+        return selectedTask ?? "default";
       default:
         return "default";
     }
@@ -105,7 +110,19 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
 
-        const reusableModes: string[] = ["system-prompt", "structured-output", "rules-toggle"];
+        if (chatConfig.mode === "multi-agent-pipeline" && chatConfig.generatedFile) {
+          onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
+        }
+
+        if (chatConfig.mode === "human-in-the-loop" && selectedToggle === "approve" && chatConfig.generatedFile) {
+          onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
+        }
+
+        if (chatConfig.mode === "parallel-gen" && chatConfig.generatedFile) {
+          onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
+        }
+
+        const reusableModes: string[] = ["system-prompt", "structured-output", "rules-toggle", "codebase-search", "human-in-the-loop", "time-travel"];
         if (reusableModes.includes(chatConfig.mode)) {
           setInput(chatConfig.defaultPrompt ?? "");
         } else if (chatConfig.mode === "multi-turn") {
@@ -186,6 +203,27 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           ]}
           selected={selectedToggle}
           onSelect={setSelectedToggle}
+        />
+      )}
+
+      {chatConfig.mode === "human-in-the-loop" && (
+        <ToggleSection
+          label="HUMAN DECISION"
+          icon={<Hand className="w-4 h-4 text-primary" />}
+          options={[
+            { id: "approve", label: "Approve" },
+            { id: "reject", label: "Reject" },
+          ]}
+          selected={selectedToggle}
+          onSelect={setSelectedToggle}
+        />
+      )}
+
+      {chatConfig.mode === "time-travel" && chatConfig.checkpoints && (
+        <CheckpointPickerSection
+          checkpoints={chatConfig.checkpoints}
+          selected={selectedTask}
+          onSelect={setSelectedTask}
         />
       )}
 
@@ -338,6 +376,43 @@ function TaskPickerSection({
           >
             <div className="font-headline text-[11px] font-bold">{t.label}</div>
             <div className="font-body text-[10px] opacity-70">{t.description}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CheckpointPickerSection({
+  checkpoints,
+  selected,
+  onSelect,
+}: {
+  checkpoints: { id: string; label: string; description: string }[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="p-3 border-b border-outline-variant/20 space-y-2">
+      <div className="flex items-center gap-2 mb-2">
+        <Clock className="w-4 h-4 text-primary" />
+        <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
+          CHECKPOINT
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {checkpoints.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => onSelect(c.id)}
+            className={`w-full text-left p-2 rounded border transition-all ${
+              selected === c.id
+                ? "border-primary bg-primary/10 text-ink"
+                : "border-outline-variant/30 bg-surface-low text-ink-variant hover:border-ink-variant"
+            }`}
+          >
+            <div className="font-headline text-[11px] font-bold">{c.label}</div>
+            <div className="font-body text-[10px] opacity-70">{c.description}</div>
           </button>
         ))}
       </div>
