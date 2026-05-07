@@ -80,28 +80,45 @@ export function CodePanel({
   filename,
   backendCode,
   backendFilename,
+  dynamicFile,
 }: {
-  code: string;
-  filename: string;
+  code?: string;
+  filename?: string;
   backendCode?: string;
   backendFilename?: string;
+  dynamicFile?: { filename: string; content: string } | null;
 }) {
   const [view, setView] = useState<"example" | "backend">("example");
 
-  const activeCode = view === "backend" && backendCode ? backendCode : code;
-  const activeFilename = view === "backend" && backendFilename ? backendFilename : filename;
+  const hasDynamic = dynamicFile && dynamicFile.content;
+  const hasStatic = code && code.trim();
+
+  const activeCode = hasDynamic
+    ? dynamicFile.content
+    : view === "backend" && backendCode
+      ? backendCode
+      : code ?? "";
+  const activeFilename = hasDynamic
+    ? dynamicFile.filename
+    : view === "backend" && backendFilename
+      ? backendFilename
+      : filename ?? "";
+
+  const isEmpty = !hasDynamic && !hasStatic;
 
   return (
     <section className="flex-1 flex flex-col bg-night min-w-0">
       <div className="flex bg-surface-container-low border-b border-outline-variant h-9 shrink-0">
-        <div className="px-3 flex items-center gap-2 bg-night border-r border-outline-variant">
-          <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-white">
-            {activeFilename}
-          </span>
-          <X className="w-3 h-3 text-ink-variant hover:text-ink cursor-pointer" />
-        </div>
+        {!isEmpty && (
+          <div className="px-3 flex items-center gap-2 bg-night border-r border-outline-variant">
+            <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-white">
+              {activeFilename}
+            </span>
+            <X className="w-3 h-3 text-ink-variant hover:text-ink cursor-pointer" />
+          </div>
+        )}
 
-        {backendCode && (
+        {!hasDynamic && backendCode && (
           <div className="ml-auto flex items-center gap-0 mr-3">
             <button
               onClick={() => setView("example")}
@@ -128,28 +145,16 @@ export function CodePanel({
       </div>
 
       <div className="flex-1 overflow-auto p-3 font-code text-[13px] leading-[20px] relative">
-        <div className="text-ink">{highlightPython(activeCode)}</div>
-
-        <div className="absolute bottom-4 right-4 w-64 bg-surface-hover/95 border border-outline-variant rounded p-3 shadow-2xl">
-          <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <span className="font-headline text-[11px] font-bold tracking-[0.05em] uppercase text-primary">
-              FLOW ANALYTICS
-            </span>
-          </div>
-          <div className="w-full h-16 bg-surface-low rounded border border-outline-variant/30 flex items-center justify-center mb-2 overflow-hidden">
-            <div className="flex gap-1 items-end h-8">
-              <div className="w-1 bg-ink-variant/20 h-4" />
-              <div className="w-1 bg-ink-variant/40 h-6" />
-              <div className="w-1 bg-primary h-8" />
-              <div className="w-1 bg-ink-variant/60 h-5" />
-              <div className="w-1 bg-ink-variant/30 h-3" />
+        {isEmpty ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-ink-variant/40 space-y-2">
+              <BarChart3 className="w-8 h-8 mx-auto opacity-30" />
+              <p className="text-[12px] font-body">Run the agent to see generated code here</p>
             </div>
           </div>
-          <p className="text-[10px] text-ink-variant leading-relaxed uppercase tracking-tight">
-            Active session: code_gen_v1.0.4. Streaming tokens via astream_events.
-          </p>
-        </div>
+        ) : (
+          <div className="text-ink">{highlightPython(activeCode)}</div>
+        )}
       </div>
     </section>
   );

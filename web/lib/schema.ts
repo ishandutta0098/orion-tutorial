@@ -70,6 +70,50 @@ export type AIExchange = {
   aiCodeSnippet?: string;
 };
 
+export type ChatMode =
+  | "model-picker"
+  | "tool-toggles"
+  | "agent-chat"
+  | "code-gen"
+  | "system-prompt"
+  | "streaming"
+  | "multi-turn";
+
+export type ChatMessage = {
+  role: "user" | "assistant" | "tool" | "system";
+  content: string;
+  toolName?: string;
+  toolArgs?: Record<string, string>;
+};
+
+export type ModelOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
+export type ToolOption = {
+  id: string;
+  name: string;
+  enabled: boolean;
+};
+
+export type SystemPromptOption = {
+  id: string;
+  label: string;
+  prompt: string;
+};
+
+export type ChatConfig = {
+  mode: ChatMode;
+  models?: ModelOption[];
+  tools?: ToolOption[];
+  systemPrompts?: SystemPromptOption[];
+  defaultPrompt?: string;
+  conversations: Record<string, ChatMessage[]>;
+  generatedFile?: { filename: string; content: string };
+};
+
 export type ChapterDef = {
   slug: string;
   number: number;
@@ -86,4 +130,5 @@ export type ChapterDef = {
   backendCode?: string;
   backendFilename?: string;
   aiExchange?: AIExchange;
+  chatConfig?: ChatConfig;
 };
