@@ -13,6 +13,35 @@ export const ch01: ChapterDef = {
     "Every AI coding agent starts with an LLM connection. In this chapter you'll configure OpenRouter as your model gateway, initialize a ChatOpenAI instance with LangChain, and verify the pipeline end-to-end. This is the foundation — once the LLM responds, you can layer tools, memory, and orchestration on top.",
   takeaway:
     "A single LLM call through OpenRouter gives you access to dozens of models via a unified API. LangChain's ChatOpenAI abstraction keeps your agent code model-agnostic, so you can swap providers without rewriting logic.",
+  codeFilename: "setting_up_llm.py",
+  codeContent: `import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("OPENROUTER_API_KEY")
+print("API Key loaded" if api_key else "API Key NOT found")
+
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="openai/gpt-4o-mini",
+    openai_api_key=api_key,
+    openai_api_base="https://openrouter.ai/api/v1",
+)
+
+response = llm.invoke("Say hello in one sentence.")
+print(response.content)`,
+  aiExchange: {
+    userMessage: "Set up the LLM connection with OpenRouter.",
+    aiLabel: "CONFIGURING LLM",
+    aiDescription: "Initializing ChatOpenAI with OpenRouter base URL and gpt-4o-mini model...",
+    aiCodeSnippet: `llm = ChatOpenAI(
+    model="openai/gpt-4o-mini",
+    openai_api_key=api_key,
+    openai_api_base="https://openrouter.ai/api/v1",
+)`,
+  },
   demos: [
     {
       id: "llm-setup-compare",
