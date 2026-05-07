@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import type { DemoDef, LogLine as LogLineType } from "@/lib/schema";
 import { runFixturesPairwise } from "@/lib/runner";
 import { ExecutionStage, type StageState } from "@/components/Terminal/ExecutionStage";
+import { CodeEditorPanel } from "./CodeEditorPanel";
+import { AgentTrace } from "./AgentTrace";
 import { FileText, Play, RotateCcw } from "lucide-react";
 
 export function DemoStation({ demo }: { demo: DemoDef }) {
@@ -149,6 +151,14 @@ export function DemoStation({ demo }: { demo: DemoDef }) {
               {leftVariant.paramSnippet}
             </pre>
           ) : null}
+          {leftVariant.trace && state === "done" ? (
+            <AgentTrace steps={leftVariant.trace} />
+          ) : null}
+          {leftVariant.codeFile && state === "done" ? (
+            <div className="mt-3">
+              <CodeEditorPanel codeFile={leftVariant.codeFile} accent="#FF5F57" />
+            </div>
+          ) : null}
           <ExecutionStage
             state={state}
             logs={leftLogs}
@@ -169,6 +179,14 @@ export function DemoStation({ demo }: { demo: DemoDef }) {
             <pre className="bg-night/60 border border-primary/30 rounded p-3 mb-2 font-code text-[11px] leading-relaxed text-ink whitespace-pre-wrap">
               {rightVariant.paramSnippet}
             </pre>
+          ) : null}
+          {rightVariant.trace && state === "done" ? (
+            <AgentTrace steps={rightVariant.trace} />
+          ) : null}
+          {rightVariant.codeFile && state === "done" ? (
+            <div className="mt-3">
+              <CodeEditorPanel codeFile={rightVariant.codeFile} accent="#3D5AFE" />
+            </div>
           ) : null}
           <ExecutionStage
             state={state}
