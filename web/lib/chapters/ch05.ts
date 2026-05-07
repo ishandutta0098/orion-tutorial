@@ -10,6 +10,43 @@ export const ch05: ChapterDef = {
   designPatterns: ["Prompt Chaining"],
   intro: "A system prompt sets the agent's persona, constraints, and coding style. This is the LangGraph equivalent of Cursor Rules (.cursorrules) — persistent instructions that guide every response. You'll learn how prompt engineering directly controls output quality, safety, and consistency.",
   takeaway: "The system prompt is your most powerful lever. A well-crafted set of rules transforms a generic LLM into a specialized coding assistant that follows your project's conventions.",
+  codeFilename: "system_prompt.py",
+  codeContent: `from langchain_core.messages import SystemMessage, HumanMessage
+
+SYSTEM_PROMPT = """You are an expert Python developer.
+When generating code:
+- Use type hints on all function parameters and returns
+- Add concise Google-style docstrings
+- Follow PEP 8 naming conventions
+- Use modern Python 3.10+ features (match, |, etc.)
+- Handle edge cases with clear error messages
+"""
+
+result = app.invoke({
+    "messages": [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(
+            content="Create 'generated/data_processor.py' with a "
+            "DataProcessor class with filter_by, group_by, "
+            "and summarize methods."
+        ),
+    ]
+})
+
+# Print the final AI summary
+for msg in result["messages"]:
+    if msg.type == "ai" and not msg.tool_calls:
+        print(msg.content)`,
+  aiExchange: {
+    userMessage: "Add system prompt rules for Python best practices.",
+    aiLabel: "APPLYING RULES",
+    aiDescription: "System prompt enforces type hints, docstrings, PEP 8, and modern Python features on all generated code...",
+    aiCodeSnippet: `SYSTEM_PROMPT = """You are an expert Python developer.
+- Use type hints on all functions
+- Add concise docstrings
+- Follow PEP 8 conventions
+- Prefer modern Python (3.10+)"""`,
+  },
   demos: [
     {
       id: "system-prompt-effect",
