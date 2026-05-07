@@ -63,6 +63,13 @@ export type DemoDef = {
 
 export type NotebookId = "Notebook 01" | "Notebook 02" | "Notebook 03";
 
+export type AIExchange = {
+  userMessage: string;
+  aiLabel: string;
+  aiDescription: string;
+  aiCodeSnippet?: string;
+};
+
 export type ChapterDef = {
   slug: string;
   number: number;
@@ -74,4 +81,7 @@ export type ChapterDef = {
   demos: DemoDef[];
   cursorFeature?: string;
   designPatterns?: string[];
+  codeContent?: string;
+  codeFilename?: string;
+  aiExchange?: AIExchange;
 };
