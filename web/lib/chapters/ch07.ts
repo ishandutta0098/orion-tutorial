@@ -10,6 +10,46 @@ export const ch07: ChapterDef = {
   designPatterns: ["Agent Loop"],
   intro: "A single-turn agent forgets everything after each response. By maintaining message history in MessagesState, the agent can handle follow-up questions, refine previous outputs, and build on context from earlier in the conversation — just like a chat session in Cursor.",
   takeaway: "Multi-turn capability transforms a stateless function into a conversational partner. The key is appending each exchange to MessagesState so the agent has full context for every decision.",
+  codeFilename: "multi_turn.py",
+  codeContent: `# Turn 1: Create a file
+messages = [
+    SystemMessage(content=SYSTEM_PROMPT),
+    HumanMessage(
+        content="Create 'generated/logger.py' with a SimpleLogger "
+        "class that writes timestamped messages to a log file."
+    ),
+]
+
+result = app.invoke({"messages": messages})
+messages = result["messages"]
+
+print("=== Turn 1 complete ===")
+print(open("generated/logger.py").read()[:300])
+
+# Turn 2: Modify it — the agent has full context from turn 1
+messages.append(
+    HumanMessage(
+        content="""
+Now read the logger.py file and add these features:
+- Log levels: INFO, WARNING, ERROR
+- A method to filter logs by level
+Write the updated file.
+"""
+    )
+)
+
+result = app.invoke({"messages": messages})
+
+print("=== Turn 2 complete ===")
+print(open("generated/logger.py").read())`,
+  aiExchange: {
+    userMessage: "Now read logger.py and add log levels and a filter method.",
+    aiLabel: "MULTI-TURN CONTEXT",
+    aiDescription: "Agent retains full message history from Turn 1. Reading existing file, then writing updated version with LogLevel enum...",
+    aiCodeSnippet: `# Turn 2: Agent has full context
+messages.append(HumanMessage(content="..."))
+result = app.invoke({"messages": messages})`,
+  },
   demos: [
     {
       id: "multi-turn-context",
