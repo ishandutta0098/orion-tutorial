@@ -12,7 +12,8 @@ import { CommandPalette } from "./CommandPalette";
 import type { ChapterDef } from "@/lib/schema";
 
 export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
-  const [dynamicFile, setDynamicFile] = useState<{ filename: string; content: string } | null>(null);
+  const initialCode = chapter.chatConfig?.initialCode ?? null;
+  const [dynamicFile, setDynamicFile] = useState<{ filename: string; content: string } | null>(initialCode);
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     setDynamicFile({ filename, content });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight } from "lucide-react";
+import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield } from "lucide-react";
 import type { ChatConfig, ChatMessage } from "@/lib/schema";
 
 type Props = {
@@ -18,6 +18,10 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(
     chatConfig.systemPrompts?.[0]?.id ?? null
   );
+  const [selectedTask, setSelectedTask] = useState<string | null>(
+    chatConfig.tasks?.[0]?.id ?? null
+  );
+  const [selectedToggle, setSelectedToggle] = useState<string>("raw");
   const [toolStates, setToolStates] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     chatConfig.tools?.forEach((t) => { initial[t.id] = t.enabled; });
@@ -43,12 +47,16 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         return selectedPrompt ?? "default";
       case "multi-turn":
         return `turn_${turnCount + 1}`;
+      case "structured-output":
+        return selectedToggle;
+      case "self-correction":
+        return selectedTask ?? "default";
+      case "rules-toggle":
+        return selectedToggle;
       default:
         return "default";
     }
-  }, [chatConfig.mode, selectedModel, toolStates, selectedPrompt, turnCount]);
-
-  const canResend = chatConfig.mode === "system-prompt" || chatConfig.mode === "multi-turn";
+  }, [chatConfig.mode, selectedModel, toolStates, selectedPrompt, turnCount, selectedToggle, selectedTask]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || disabled || loading) return;
@@ -89,11 +97,16 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         setLoading(false);
         setMessages((prev) => [...prev, ...response]);
 
-        if (chatConfig.mode === "code-gen" && chatConfig.generatedFile) {
+        if ((chatConfig.mode === "code-gen" || chatConfig.mode === "inline-edit") && chatConfig.generatedFile) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
 
-        if (chatConfig.mode === "system-prompt") {
+        if (chatConfig.mode === "self-correction" && chatConfig.generatedFile) {
+          onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
+        }
+
+        const reusableModes: string[] = ["system-prompt", "structured-output", "rules-toggle"];
+        if (reusableModes.includes(chatConfig.mode)) {
           setInput(chatConfig.defaultPrompt ?? "");
         } else if (chatConfig.mode === "multi-turn") {
           setTurnCount((c) => c + 1);
@@ -139,6 +152,40 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           prompts={chatConfig.systemPrompts}
           selected={selectedPrompt}
           onSelect={setSelectedPrompt}
+        />
+      )}
+
+      {chatConfig.mode === "structured-output" && (
+        <ToggleSection
+          label="OUTPUT MODE"
+          icon={<Zap className="w-4 h-4 text-primary" />}
+          options={[
+            { id: "raw", label: "Raw" },
+            { id: "structured", label: "Structured" },
+          ]}
+          selected={selectedToggle}
+          onSelect={setSelectedToggle}
+        />
+      )}
+
+      {chatConfig.mode === "self-correction" && chatConfig.tasks && (
+        <TaskPickerSection
+          tasks={chatConfig.tasks}
+          selected={selectedTask}
+          onSelect={setSelectedTask}
+        />
+      )}
+
+      {chatConfig.mode === "rules-toggle" && (
+        <ToggleSection
+          label="CODING RULES"
+          icon={<Shield className="w-4 h-4 text-primary" />}
+          options={[
+            { id: "no_rules", label: "No Rules" },
+            { id: "strict", label: "Strict Rules" },
+          ]}
+          selected={selectedToggle}
+          onSelect={setSelectedToggle}
         />
       )}
 
@@ -218,6 +265,83 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function ToggleSection({
+  label,
+  icon,
+  options,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  options: { id: string; label: string }[];
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="p-3 border-b border-outline-variant/20 space-y-2">
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
+          {label}
+        </span>
+      </div>
+      <div className="flex gap-1">
+        {options.map((o) => (
+          <button
+            key={o.id}
+            onClick={() => onSelect(o.id)}
+            className={`flex-1 px-2 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${
+              selected === o.id
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-outline-variant/30 text-ink-variant hover:text-ink"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TaskPickerSection({
+  tasks,
+  selected,
+  onSelect,
+}: {
+  tasks: { id: string; label: string; description: string }[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="p-3 border-b border-outline-variant/20 space-y-2">
+      <div className="flex items-center gap-2 mb-2">
+        <Zap className="w-4 h-4 text-primary" />
+        <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
+          SELECT TASK
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {tasks.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onSelect(t.id)}
+            className={`w-full text-left p-2 rounded border transition-all ${
+              selected === t.id
+                ? "border-primary bg-primary/10 text-ink"
+                : "border-outline-variant/30 bg-surface-low text-ink-variant hover:border-ink-variant"
+            }`}
+          >
+            <div className="font-headline text-[11px] font-bold">{t.label}</div>
+            <div className="font-body text-[10px] opacity-70">{t.description}</div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

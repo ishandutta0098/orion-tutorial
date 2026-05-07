@@ -77,7 +77,12 @@ export type ChatMode =
   | "code-gen"
   | "system-prompt"
   | "streaming"
-  | "multi-turn";
+  | "multi-turn"
+  | "structured-output"
+  | "self-correction"
+  | "reflection"
+  | "rules-toggle"
+  | "inline-edit";
 
 export type ChatMessage = {
   role: "user" | "assistant" | "tool" | "system";
@@ -104,14 +109,22 @@ export type SystemPromptOption = {
   prompt: string;
 };
 
+export type TaskOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
 export type ChatConfig = {
   mode: ChatMode;
   models?: ModelOption[];
   tools?: ToolOption[];
   systemPrompts?: SystemPromptOption[];
+  tasks?: TaskOption[];
   defaultPrompt?: string;
   conversations: Record<string, ChatMessage[]>;
   generatedFile?: { filename: string; content: string };
+  initialCode?: { filename: string; content: string };
 };
 
 export type ChapterDef = {
