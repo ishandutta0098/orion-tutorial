@@ -23,6 +23,8 @@ export default async function ChapterPage({
 
   const filename = chapter.codeFilename ?? slug.replace(/-/g, "_") + ".py";
   const code = chapter.codeContent ?? `# ${chapter.title}\n# Code content loading...`;
+  const backendCode = chapter.backendCode;
+  const backendFilename = chapter.backendFilename;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-night text-ink">
@@ -35,7 +37,8 @@ export default async function ChapterPage({
             <CodePanel
               code={code}
               filename={filename}
-              secondaryTab="utils.py"
+              backendCode={backendCode}
+              backendFilename={backendFilename}
             />
             <StatusFooter />
           </div>

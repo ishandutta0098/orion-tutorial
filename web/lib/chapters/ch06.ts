@@ -10,8 +10,36 @@ export const ch06: ChapterDef = {
   designPatterns: ["Agent Loop"],
   intro: "Waiting for a complete response is a poor UX. With astream_events, you get real-time token-by-token output, tool call notifications, and step-level visibility as the agent works. This is how Cursor shows you the agent's thinking process in real-time.",
   takeaway: "astream_events gives you a firehose of typed events — token deltas, tool calls, state transitions. Filter by event kind to build responsive UIs that show exactly what the agent is doing at each moment.",
-  codeFilename: "streaming.py",
-  codeContent: `async def stream_agent(user_message: str):
+  codeFilename: "stream_output.log",
+  codeContent: `# Real-time streaming output from agent execution
+# Task: "List files in 'generated' directory and read calculator.py"
+
+[on_chat_model_stream] I'll list the directory and then read the file.
+--- Calling tool: list_directory ---
+  args: {"directory": "generated"}
+--- Tool done ---
+  result: calculator.py
+          data_processor.py
+          logger.py
+
+--- Calling tool: read_file ---
+  args: {"filepath": "generated/calculator.py"}
+--- Tool done ---
+  result: class Calculator:
+              def __init__(self): ...
+
+[on_chat_model_stream] Here's what I found:
+[on_chat_model_stream] The \`generated/\` directory contains 3 files.
+[on_chat_model_stream] The \`calculator.py\` file implements a
+[on_chat_model_stream] Calculator class with add, subtract,
+[on_chat_model_stream] multiply, divide methods and history tracking.
+
+# Stream complete
+# Events fired: 14
+# Tools called: 2 (list_directory, read_file)
+# Tokens streamed: 89`,
+  backendFilename: "streaming.py",
+  backendCode: `async def stream_agent(user_message: str):
     inputs = {
         "messages": [
             SystemMessage(content=SYSTEM_PROMPT),

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { X, BarChart3 } from "lucide-react";
 
 function highlightPython(code: string): React.ReactNode[] {
@@ -22,7 +23,7 @@ function PythonLine({ line }: { line: string }) {
   }
 
   const parts: React.ReactNode[] = [];
-  let remaining = line;
+  const remaining = line;
   let keyIdx = 0;
 
   const keywords = /\b(from|import|def|return|with|as|if|else|elif|for|in|class|async|await|try|except|raise|not|and|or|True|False|None)\b/g;
@@ -77,32 +78,57 @@ function PythonLine({ line }: { line: string }) {
 export function CodePanel({
   code,
   filename,
-  secondaryTab,
+  backendCode,
+  backendFilename,
 }: {
   code: string;
   filename: string;
-  secondaryTab?: string;
+  backendCode?: string;
+  backendFilename?: string;
 }) {
+  const [view, setView] = useState<"example" | "backend">("example");
+
+  const activeCode = view === "backend" && backendCode ? backendCode : code;
+  const activeFilename = view === "backend" && backendFilename ? backendFilename : filename;
+
   return (
     <section className="flex-1 flex flex-col bg-night min-w-0">
       <div className="flex bg-surface-container-low border-b border-outline-variant h-9 shrink-0">
         <div className="px-3 flex items-center gap-2 bg-night border-r border-outline-variant">
           <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-white">
-            {filename}
+            {activeFilename}
           </span>
           <X className="w-3 h-3 text-ink-variant hover:text-ink cursor-pointer" />
         </div>
-        {secondaryTab && (
-          <div className="px-3 flex items-center gap-2 hover:bg-surface-high/20 border-r border-outline-variant/30 cursor-pointer">
-            <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
-              {secondaryTab}
-            </span>
+
+        {backendCode && (
+          <div className="ml-auto flex items-center gap-0 mr-3">
+            <button
+              onClick={() => setView("example")}
+              className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-l border border-outline-variant transition-colors ${
+                view === "example"
+                  ? "bg-white text-night"
+                  : "bg-transparent text-ink-variant hover:text-ink"
+              }`}
+            >
+              Example
+            </button>
+            <button
+              onClick={() => setView("backend")}
+              className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-r border border-l-0 border-outline-variant transition-colors ${
+                view === "backend"
+                  ? "bg-primary text-white"
+                  : "bg-transparent text-ink-variant hover:text-ink"
+              }`}
+            >
+              Backend
+            </button>
           </div>
         )}
       </div>
 
       <div className="flex-1 overflow-auto p-3 font-code text-[13px] leading-[20px] relative">
-        <div className="text-ink">{highlightPython(code)}</div>
+        <div className="text-ink">{highlightPython(activeCode)}</div>
 
         <div className="absolute bottom-4 right-4 w-64 bg-surface-hover/95 border border-outline-variant rounded p-3 shadow-2xl">
           <div className="flex items-center gap-2 mb-2">

@@ -10,8 +10,61 @@ export const ch05: ChapterDef = {
   designPatterns: ["Prompt Chaining"],
   intro: "A system prompt sets the agent's persona, constraints, and coding style. This is the LangGraph equivalent of Cursor Rules (.cursorrules) — persistent instructions that guide every response. You'll learn how prompt engineering directly controls output quality, safety, and consistency.",
   takeaway: "The system prompt is your most powerful lever. A well-crafted set of rules transforms a generic LLM into a specialized coding assistant that follows your project's conventions.",
-  codeFilename: "system_prompt.py",
-  codeContent: `from langchain_core.messages import SystemMessage, HumanMessage
+  codeFilename: "data_processor.py",
+  codeContent: `# generated/data_processor.py
+# Generated with system prompt enforcing type hints + docstrings
+
+from typing import Any, Callable
+
+
+class DataProcessor:
+    """Process and analyze collections of data records."""
+
+    def __init__(self, data: list[dict[str, Any]]) -> None:
+        self.data = data
+
+    def filter_by(self, key: str, value: Any) -> "DataProcessor":
+        """Filter records where key matches value.
+
+        Args:
+            key: The field name to filter on.
+            value: The value to match.
+
+        Returns:
+            A new DataProcessor with filtered data.
+        """
+        filtered = [r for r in self.data if r.get(key) == value]
+        return DataProcessor(filtered)
+
+    def group_by(self, key: str) -> dict[str, list[dict[str, Any]]]:
+        """Group records by a given key.
+
+        Args:
+            key: The field name to group on.
+
+        Returns:
+            Dictionary mapping key values to lists of records.
+        """
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for record in self.data:
+            k = str(record.get(key, "unknown"))
+            groups.setdefault(k, []).append(record)
+        return groups
+
+    def summarize(self, key: str, func: Callable = len) -> dict[str, Any]:
+        """Summarize data by applying a function to groups.
+
+        Args:
+            key: The field to group by.
+            func: Aggregation function (default: count).
+
+        Returns:
+            Dictionary of group -> aggregated value.
+        """
+        groups = self.group_by(key)
+        return {k: func(v) for k, v in groups.items()}`,
+  backendFilename: "system_prompt.py",
+  backendCode: `from langchain_core.messages import SystemMessage, HumanMessage
 
 SYSTEM_PROMPT = """You are an expert Python developer.
 When generating code:

@@ -83,5 +83,7 @@ export type ChapterDef = {
   designPatterns?: string[];
   codeContent?: string;
   codeFilename?: string;
+  backendCode?: string;
+  backendFilename?: string;
   aiExchange?: AIExchange;
 };

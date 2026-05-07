@@ -10,8 +10,51 @@ export const ch02: ChapterDef = {
   designPatterns: ["Tool Use"],
   intro: "Tools are how an LLM interacts with the outside world. Using LangChain's @tool decorator, you define Python functions with type hints and docstrings — the framework auto-generates a JSON schema so the model knows when and how to call each tool.",
   takeaway: "Well-typed, well-documented tool functions let the LLM self-select the right tool at the right time. The @tool decorator bridges natural language intent to executable code.",
-  codeFilename: "defining_tools.py",
-  codeContent: `from langchain_core.tools import tool
+  codeFilename: "tool_schemas.json",
+  codeContent: `# Auto-generated tool schemas from @tool decorator
+# The LLM uses these to decide when and how to call each tool
+
+# read_file
+{
+  "name": "read_file",
+  "description": "Read the contents of a file and return it as a string.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "filepath": {"title": "Filepath", "type": "string"}
+    },
+    "required": ["filepath"]
+  }
+}
+
+# write_file
+{
+  "name": "write_file",
+  "description": "Write content to a file. Creates the file if it doesn't exist.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "filepath": {"title": "Filepath", "type": "string"},
+      "content": {"title": "Content", "type": "string"}
+    },
+    "required": ["filepath", "content"]
+  }
+}
+
+# list_directory
+{
+  "name": "list_directory",
+  "description": "List all files and directories in the given path.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "directory": {"title": "Directory", "type": "string"}
+    },
+    "required": ["directory"]
+  }
+}`,
+  backendFilename: "defining_tools.py",
+  backendCode: `from langchain_core.tools import tool
 
 
 @tool

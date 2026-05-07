@@ -10,8 +10,51 @@ export const ch07: ChapterDef = {
   designPatterns: ["Agent Loop"],
   intro: "A single-turn agent forgets everything after each response. By maintaining message history in MessagesState, the agent can handle follow-up questions, refine previous outputs, and build on context from earlier in the conversation — just like a chat session in Cursor.",
   takeaway: "Multi-turn capability transforms a stateless function into a conversational partner. The key is appending each exchange to MessagesState so the agent has full context for every decision.",
-  codeFilename: "multi_turn.py",
-  codeContent: `# Turn 1: Create a file
+  codeFilename: "logger.py",
+  codeContent: `# generated/logger.py (Turn 2 — with LogLevel)
+# Updated by the agent using context from Turn 1
+
+from enum import Enum
+from datetime import datetime
+
+
+class LogLevel(Enum):
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+
+
+class SimpleLogger:
+    """Logger that writes timestamped messages to a file."""
+
+    def __init__(self, log_file: str = "app.log") -> None:
+        self.log_file = log_file
+        self.entries: list[dict] = []
+
+    def log(self, message: str, level: LogLevel = LogLevel.INFO) -> None:
+        """Write a timestamped log entry."""
+        entry = {
+            "timestamp": datetime.now().isoformat(),
+            "level": level.value,
+            "message": message,
+        }
+        self.entries.append(entry)
+        with open(self.log_file, "a") as f:
+            f.write(f"[{entry['timestamp']}] {level.value}: {message}\\n")
+
+    def filter_by_level(self, level: LogLevel) -> list[dict]:
+        """Return only log entries matching the given level."""
+        return [e for e in self.entries if e["level"] == level.value]
+
+
+if __name__ == "__main__":
+    logger = SimpleLogger()
+    logger.log("Application started")
+    logger.log("Disk space low", LogLevel.WARNING)
+    logger.log("Connection failed", LogLevel.ERROR)
+    print(logger.filter_by_level(LogLevel.ERROR))`,
+  backendFilename: "multi_turn.py",
+  backendCode: `# Turn 1: Create a file
 messages = [
     SystemMessage(content=SYSTEM_PROMPT),
     HumanMessage(

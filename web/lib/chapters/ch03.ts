@@ -10,8 +10,30 @@ export const ch03: ChapterDef = {
   designPatterns: ["Agent Loop", "Tool Use"],
   intro: "A LangGraph agent is a state machine. You define nodes (LLM calls, tool execution) and edges (conditional routing based on whether the model wants to call a tool or return a final answer). MessagesState tracks the conversation, and ToolNode handles tool dispatch automatically.",
   takeaway: "The agent graph pattern — model node → should_continue → tool node → loop back — is the fundamental architecture of every LangGraph agent. Master this and everything else is an extension.",
-  codeFilename: "agent_graph.py",
-  codeContent: `from langgraph.graph import StateGraph, START, END
+  codeFilename: "routing_output.py",
+  codeContent: `# Agent routing decision trace
+# Demonstrates tool_calls vs direct response
+
+# Query 1: "Create a file called hello.py"
+# -> Agent detects tool intent -> routes to tools
+# Result:
+#   tool_calls: [
+#     {"name": "write_file", "args": {"filepath": "hello.py", "content": "print('hello')"}}
+#   ]
+#   Route: agent -> tools -> agent -> END
+
+# Query 2: "What is Python?"
+# -> No tool intent -> responds directly
+# Result:
+#   tool_calls: []
+#   Route: agent -> END
+#   Response: "Python is a high-level programming language..."
+
+# Graph structure:
+# START -> agent -> should_continue? -> tools -> agent (loop)
+#                                    -> END (final answer)`,
+  backendFilename: "agent_graph.py",
+  backendCode: `from langgraph.graph import StateGraph, START, END
 from langgraph.graph import MessagesState
 from langgraph.prebuilt import ToolNode
 
