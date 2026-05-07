@@ -54,13 +54,13 @@ for t in tools:
       enabled: [
         {
           role: "tool",
-          content: "03_production_coding_agent.ipynb\norion\nREADME.md\n02_self_correcting_code_agent.ipynb\nCONTENTS.md\n01_code_generator_with_tools.ipynb\nsample_project",
+          content: "notebook_01/\n  setting_up_llm.py\n  defining_tools.py\n  agent_graph.py\n  code_generation.py\n  system_prompt.py\n  streaming.py\n  multi_turn.py\nnotebook_02/\n  error_detection.py\n  sandbox_execution.py\n  self_correction_loop.py\n  retry_strategies.py\n  validation.py\nnotebook_03/\n  production_config.py\n  logging_monitoring.py\n  rate_limiting.py\n  deployment.py",
           toolName: "list_directory",
           toolArgs: { directory: "." },
         },
         {
           role: "assistant",
-          content: "The files in the current directory are:\n\n- 03_production_coding_agent.ipynb\n- 02_self_correcting_code_agent.ipynb\n- 01_code_generator_with_tools.ipynb\n- README.md\n- CONTENTS.md\n- orion (directory)\n- sample_project (directory)",
+          content: "The current directory contains 3 notebook folders:\n\n**notebook_01/** — Code Generator with Tools\n- setting_up_llm.py\n- defining_tools.py\n- agent_graph.py\n- code_generation.py\n- system_prompt.py\n- streaming.py\n- multi_turn.py\n\n**notebook_02/** — Self-Correcting Agent\n- error_detection.py\n- sandbox_execution.py\n- self_correction_loop.py\n- retry_strategies.py\n- validation.py\n\n**notebook_03/** — Production Agent\n- production_config.py\n- logging_monitoring.py\n- rate_limiting.py\n- deployment.py",
         },
       ],
       disabled: [

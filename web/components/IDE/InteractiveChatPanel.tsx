@@ -13,6 +13,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(chatConfig.defaultPrompt ?? "");
   const [disabled, setDisabled] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(
     chatConfig.systemPrompts?.[0]?.id ?? null
@@ -28,7 +29,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, streamingText]);
+  }, [messages, streamingText, loading]);
 
   const getConversationKey = useCallback((): string => {
     switch (chatConfig.mode) {
@@ -47,55 +48,66 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
     }
   }, [chatConfig.mode, selectedModel, toolStates, selectedPrompt, turnCount]);
 
+  const canResend = chatConfig.mode === "system-prompt" || chatConfig.mode === "multi-turn";
+
   const handleSend = useCallback(() => {
-    if (!input.trim() || disabled) return;
+    if (!input.trim() || disabled || loading) return;
 
     const userMsg: ChatMessage = { role: "user", content: input.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
 
     const key = getConversationKey();
     const response = chatConfig.conversations[key] ?? chatConfig.conversations["default"] ?? [];
 
-    if (chatConfig.mode === "streaming") {
-      setDisabled(true);
-      const fullText = response
-        .filter((m) => m.role === "assistant")
-        .map((m) => m.content)
-        .join("\n");
+    const thinkingDelay = 1200 + Math.random() * 800;
 
-      let idx = 0;
-      setStreamingText("");
-      const interval = setInterval(() => {
-        idx++;
-        setStreamingText(fullText.slice(0, idx));
-        if (idx >= fullText.length) {
-          clearInterval(interval);
-          setStreamingText(null);
-          setMessages((prev) => [...prev, ...response]);
-        }
-      }, 25);
+    if (chatConfig.mode === "streaming") {
+      setTimeout(() => {
+        setLoading(false);
+        const fullText = response
+          .filter((m) => m.role === "assistant")
+          .map((m) => m.content)
+          .join("\n");
+
+        let idx = 0;
+        setStreamingText("");
+        const interval = setInterval(() => {
+          idx++;
+          setStreamingText(fullText.slice(0, idx));
+          if (idx >= fullText.length) {
+            clearInterval(interval);
+            setStreamingText(null);
+            setMessages((prev) => [...prev, ...response]);
+            setDisabled(true);
+          }
+        }, 25);
+      }, thinkingDelay);
     } else {
       setTimeout(() => {
+        setLoading(false);
         setMessages((prev) => [...prev, ...response]);
+
         if (chatConfig.mode === "code-gen" && chatConfig.generatedFile) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
-        if (chatConfig.mode !== "multi-turn") {
-          setDisabled(true);
-        } else {
+
+        if (chatConfig.mode === "system-prompt") {
+          setInput(chatConfig.defaultPrompt ?? "");
+        } else if (chatConfig.mode === "multi-turn") {
           setTurnCount((c) => c + 1);
           if (turnCount >= 1) {
             setDisabled(true);
+          } else {
+            setInput("Now read the logger.py file and add these features:\n- Log levels: INFO, WARNING, ERROR\n- A method to filter logs by level\nWrite the updated file.");
           }
+        } else {
+          setDisabled(true);
         }
-      }, 400);
+      }, thinkingDelay);
     }
-
-    if (chatConfig.mode !== "multi-turn" && chatConfig.mode !== "streaming") {
-      setDisabled(true);
-    }
-  }, [input, disabled, getConversationKey, chatConfig, onFileGenerated, turnCount]);
+  }, [input, disabled, loading, getConversationKey, chatConfig, onFileGenerated, turnCount]);
 
   return (
     <aside className="w-96 bg-surface-container-low border-l border-outline-variant flex flex-col shrink-0">
@@ -134,6 +146,25 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         {messages.map((msg, i) => (
           <MessageBubble key={i} message={msg} />
         ))}
+        {loading && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-5 w-5 rounded-full bg-white flex items-center justify-center">
+                <Bot className="w-3 h-3 text-night" />
+              </div>
+              <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink animate-pulse">
+                THINKING...
+              </span>
+            </div>
+            <div className="bg-surface-low p-3 rounded border border-outline-variant">
+              <div className="flex gap-1.5">
+                <span className="w-2 h-2 bg-ink-variant/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-ink-variant/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-ink-variant/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
         {streamingText !== null && (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 mb-1">
@@ -152,7 +183,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
             </div>
           </div>
         )}
-        {messages.length === 0 && streamingText === null && (
+        {messages.length === 0 && streamingText === null && !loading && (
           <div className="flex items-center justify-center h-full text-ink-variant text-[12px] opacity-50">
             Send a message to interact with the agent
           </div>
@@ -163,10 +194,10 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         <div className="bg-surface-low rounded border border-outline-variant focus-within:border-ink transition-all overflow-hidden">
           <textarea
             className="w-full bg-transparent border-none focus:outline-none text-[12px] p-2 resize-none h-16 text-ink placeholder-ink-variant/30 font-body"
-            placeholder={disabled ? "Session complete" : "Type your message..."}
+            placeholder={disabled ? "Session complete" : loading ? "Waiting for response..." : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={disabled}
+            disabled={disabled || loading}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -177,11 +208,11 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           <div className="flex items-center justify-end p-2 bg-surface-low">
             <button
               onClick={handleSend}
-              disabled={disabled || !input.trim()}
+              disabled={disabled || loading || !input.trim()}
               className="bg-ink text-night h-7 px-3 rounded text-[10px] font-bold uppercase hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               <Send className="w-3 h-3" />
-              SEND
+              {loading ? "..." : "SEND"}
             </button>
           </div>
         </div>
