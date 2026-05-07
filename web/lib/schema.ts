@@ -16,12 +16,27 @@ export type LogLine = {
   ts?: string;
 };
 
+export type CodeFile = {
+  filename: string;
+  language: string;
+  content: string;
+};
+
+export type TraceStep = {
+  type: "human" | "ai" | "tool";
+  content: string;
+  toolName?: string;
+  toolArgs?: string[];
+};
+
 export type FixturePair = {
   label: string;
   description: string;
   log: LogLine[];
   output: string;
   paramSnippet?: string;
+  codeFile?: CodeFile;
+  trace?: TraceStep[];
 };
 
 export type DemoOption = {
