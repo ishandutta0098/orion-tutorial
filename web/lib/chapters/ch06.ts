@@ -10,6 +10,42 @@ export const ch06: ChapterDef = {
   designPatterns: ["Agent Loop"],
   intro: "Waiting for a complete response is a poor UX. With astream_events, you get real-time token-by-token output, tool call notifications, and step-level visibility as the agent works. This is how Cursor shows you the agent's thinking process in real-time.",
   takeaway: "astream_events gives you a firehose of typed events — token deltas, tool calls, state transitions. Filter by event kind to build responsive UIs that show exactly what the agent is doing at each moment.",
+  codeFilename: "streaming.py",
+  codeContent: `async def stream_agent(user_message: str):
+    inputs = {
+        "messages": [
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=user_message),
+        ]
+    }
+
+    async for event in app.astream_events(inputs, version="v2"):
+
+        if event["event"] == "on_chat_model_stream":
+            chunk = event["data"]["chunk"]
+            if chunk.content:
+                print(chunk.content, end="", flush=True)
+
+        elif event["event"] == "on_tool_start":
+            print(f"\\n--- Calling tool: {event['name']} ---")
+
+        elif event["event"] == "on_tool_end":
+            print(f"--- Tool done ---\\n")
+
+
+await stream_agent(
+    "List files in 'generated' directory and read calculator.py"
+)`,
+  aiExchange: {
+    userMessage: "Stream the agent output in real-time.",
+    aiLabel: "STREAMING TOKENS",
+    aiDescription: "Using astream_events for real-time token output. Events: on_chat_model_stream, on_tool_start, on_tool_end...",
+    aiCodeSnippet: `async for event in app.astream_events(inputs, version="v2"):
+    if event["event"] == "on_chat_model_stream":
+        chunk = event["data"]["chunk"]
+        if chunk.content:
+            print(chunk.content, end="", flush=True)`,
+  },
   demos: [
     {
       id: "streaming-events",
