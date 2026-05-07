@@ -2,7 +2,7 @@
 
 An interactive tutorial series for building AI coding agents with LangChain and LangGraph — presented as a Cursor-like IDE experience in the browser.
 
-**Live:** https://web-blue-sigma-80.vercel.app
+**Live:** https://orion-tutorial.vercel.app/
 
 ---
 
