@@ -4,6 +4,7 @@ export const ch11: ChapterDef = {
   slug: "dynamic-rules",
   number: 11,
   notebook: "Notebook 02",
+  subtopicLabel: "2.4 Dynamic Rules",
   title: "Dynamic Rules Injection",
   subtitle: "Inject coding rules at runtime — the .cursorrules equivalent for agents.",
   cursorFeature: "Cursor Rules",
