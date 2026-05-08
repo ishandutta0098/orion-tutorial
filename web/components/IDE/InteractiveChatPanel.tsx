@@ -8,10 +8,11 @@ type Props = {
   chatConfig: ChatConfig;
   onFileGenerated?: (filename: string, content: string) => void;
   onTerminalLogs?: (logs: LogLine[]) => void;
+  onExecuteStart?: () => void;
   resetKey?: number;
 };
 
-export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs, resetKey }: Props) {
+export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs, onExecuteStart, resetKey }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(chatConfig.defaultPrompt ?? "");
   const [disabled, setDisabled] = useState(false);
@@ -74,8 +75,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
       case "model-picker":
         return selectedModel ?? "default";
       case "tool-toggles": {
-        const anyEnabled = Object.values(toolStates).some(Boolean);
-        return anyEnabled ? "enabled" : "disabled";
+        return toolStates.list_directory ? "enabled" : "disabled";
       }
       case "system-prompt":
         return selectedPrompt ?? "default";
@@ -99,14 +99,16 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
     if (!input.trim() || disabled || loading) return;
 
     const userMsg: ChatMessage = { role: "user", content: input.trim() };
+    onExecuteStart?.();
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     const key = getConversationKey();
     const response = chatConfig.conversations[key] ?? chatConfig.conversations["default"] ?? [];
-    const generatedPath = chatConfig.generatedFile
-      ? `generated/${chatConfig.generatedFile.filename}`
+    const runFile = chatConfig.mode === "multi-turn" ? chatConfig.turnFiles?.[key] : chatConfig.generatedFile;
+    const generatedPath = runFile
+      ? runFile.filename.includes("/") ? runFile.filename : `generated/${runFile.filename}`
       : null;
     const fallbackTerminalLogs: LogLine[] = [
         { tag: "PROCESS", text: `[execute] ${chatConfig.mode} tutorial` },
@@ -178,6 +180,10 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
         if (reusableModes.includes(chatConfig.mode)) {
           setInput(chatConfig.defaultPrompt ?? "");
         } else if (chatConfig.mode === "multi-turn") {
+          const turnFile = chatConfig.turnFiles?.[key];
+          if (turnFile) {
+            onFileGenerated?.(turnFile.filename, turnFile.content);
+          }
           setTurnCount((c) => c + 1);
           if (turnCount >= 1) {
             setDisabled(true);
@@ -189,7 +195,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
         }
       }, thinkingDelay);
     }
-  }, [input, disabled, loading, getConversationKey, chatConfig, onFileGenerated, onTerminalLogs, selectedTask, turnCount]);
+  }, [input, disabled, loading, getConversationKey, chatConfig, onExecuteStart, onFileGenerated, onTerminalLogs, selectedTask, turnCount]);
 
   return (
     <aside className="w-96 bg-surface-container-low border-l border-outline-variant flex flex-col shrink-0">
@@ -199,14 +205,6 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
           AI ASSISTANT
         </span>
       </div>
-
-      {chatConfig.mode === "model-picker" && chatConfig.models && (
-        <ModelPickerSection
-          models={chatConfig.models}
-          selected={selectedModel}
-          onSelect={setSelectedModel}
-        />
-      )}
 
       {chatConfig.mode === "tool-toggles" && chatConfig.tools && (
         <ToolToggleSection
@@ -328,6 +326,13 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
       </div>
 
       <div className="p-3 border-t border-outline-variant bg-surface-container-low">
+        {chatConfig.mode === "model-picker" && chatConfig.models && (
+          <ModelPickerSection
+            models={chatConfig.models}
+            selected={selectedModel}
+            onSelect={setSelectedModel}
+          />
+        )}
         <div className="bg-surface-low rounded border border-outline-variant focus-within:border-ink transition-all overflow-hidden">
           <textarea
             className="w-full bg-transparent border-none focus:outline-none text-[12px] p-2 resize-none h-16 text-ink placeholder-ink-variant/30 font-body"
@@ -479,33 +484,29 @@ function ModelPickerSection({
 }: {
   models: { id: string; label: string; description: string }[];
   selected: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string | null) => void;
 }) {
   return (
-    <div className="p-3 border-b border-outline-variant/20 space-y-2">
-      <div className="flex items-center gap-2 mb-2">
+    <label className="mb-2 block space-y-1.5">
+      <div className="flex items-center gap-2">
         <Cpu className="w-4 h-4 text-primary" />
         <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
           SELECT MODEL
         </span>
       </div>
-      <div className="space-y-1.5">
-        {models.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => onSelect(m.id)}
-            className={`w-full text-left p-2 rounded border transition-all ${
-              selected === m.id
-                ? "border-primary bg-primary/10 text-ink"
-                : "border-outline-variant/30 bg-surface-low text-ink-variant hover:border-ink-variant"
-            }`}
-          >
-            <div className="font-headline text-[11px] font-bold">{m.label}</div>
-            <div className="font-body text-[10px] opacity-70">{m.description}</div>
-          </button>
+      <select
+        value={selected ?? ""}
+        onChange={(event) => onSelect(event.target.value || null)}
+        className="h-8 w-full rounded border border-outline-variant bg-surface-low px-2 font-body text-[12px] text-ink outline-none transition-colors focus:border-ink"
+      >
+        <option value="">Default model</option>
+        {models.map((model) => (
+          <option key={model.id} value={model.id}>
+            {model.label}
+          </option>
         ))}
-      </div>
-    </div>
+      </select>
+    </label>
   );
 }
 
