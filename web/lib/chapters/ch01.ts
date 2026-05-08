@@ -4,6 +4,7 @@ export const ch01: ChapterDef = {
   slug: "setting-up-llm",
   number: 1,
   notebook: "Notebook 01",
+  subtopicLabel: "1.1 LLM Setup",
   title: "Setting Up LLM + OpenRouter",
   subtitle:
     "Connect to any LLM through OpenRouter and make your first API call with LangChain.",
