@@ -2,7 +2,13 @@
 
 import { RotateCcw, Search, Terminal, Settings } from "lucide-react";
 
-export function IDEHeader({ onReset }: { onReset?: () => void }) {
+export function IDEHeader({
+  onReset,
+  onResetAll,
+}: {
+  onReset?: () => void;
+  onResetAll?: () => void;
+}) {
   return (
     <header className="bg-surface-container-low flex justify-between items-center w-full px-4 h-12 border-b border-outline-variant z-50 shrink-0">
       <div className="flex items-center gap-4">
@@ -29,6 +35,15 @@ export function IDEHeader({ onReset }: { onReset?: () => void }) {
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset
+          </button>
+        )}
+        {onResetAll && (
+          <button
+            onClick={onResetAll}
+            className="flex items-center gap-1.5 rounded border border-outline-variant bg-surface-high px-2.5 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-ink-variant transition-colors hover:text-ink"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset All
           </button>
         )}
         <div className="bg-surface-high flex items-center px-2 py-1 rounded border border-outline-variant w-64">
