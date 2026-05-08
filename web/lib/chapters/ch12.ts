@@ -47,6 +47,7 @@ print(f"\\nModified code:\\n{result['code']}")`,
 - Support an optional greeting parameter (default "Hello")
 - Return the string instead of printing it
 - Add tests that verify the output`,
+    inlineEditPrompt: "Add type hints, docstring, optional greeting param, return instead of print, add tests",
     initialCode: {
       filename: "greet.py",
       content: `def greet(name):

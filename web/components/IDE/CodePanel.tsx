@@ -1,20 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { X, BarChart3 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, BarChart3, ArrowUp, Loader2 } from "lucide-react";
 
-function highlightPython(code: string): React.ReactNode[] {
+type LineSelection = {
+  start: number;
+  end: number;
+};
+
+type InlineEditConfig = {
+  prompt?: string;
+  generatedFile?: { filename: string; content: string };
+  onApply: (filename: string, content: string) => void;
+};
+
+function highlightPython(
+  code: string,
+  selection?: LineSelection | null,
+  onLineClick?: (line: number) => void
+): React.ReactNode[] {
   const lines = code.split("\n");
-  return lines.map((line, i) => (
-    <div key={i} className="flex">
+  return lines.map((line, i) => {
+    const lineNumber = i + 1;
+    const isSelected =
+      !!selection && lineNumber >= selection.start && lineNumber <= selection.end;
+
+    return (
+    <div
+      key={i}
+      className={`flex ${isSelected ? "bg-primary/15 outline outline-1 outline-primary/30" : ""} ${
+        onLineClick ? "cursor-text" : ""
+      }`}
+      onClick={() => onLineClick?.(lineNumber)}
+    >
       <span className="w-10 text-ink-variant/20 text-right pr-4 select-none font-code text-[11px] shrink-0">
-        {i + 1}
+        {lineNumber}
       </span>
       <span className="flex-1 whitespace-pre">
         <PythonLine line={line} />
       </span>
     </div>
-  ));
+    );
+  });
 }
 
 function PythonLine({ line }: { line: string }) {
@@ -81,14 +108,22 @@ export function CodePanel({
   backendCode,
   backendFilename,
   dynamicFile,
+  inlineEditConfig,
 }: {
   code?: string;
   filename?: string;
   backendCode?: string;
   backendFilename?: string;
   dynamicFile?: { filename: string; content: string } | null;
+  inlineEditConfig?: InlineEditConfig;
 }) {
   const [view, setView] = useState<"example" | "backend">("example");
+  const [selection, setSelection] = useState<LineSelection | null>(
+    inlineEditConfig ? { start: 1, end: 4 } : null
+  );
+  const [showInlineEdit, setShowInlineEdit] = useState(!!inlineEditConfig);
+  const [editInput, setEditInput] = useState(inlineEditConfig?.prompt ?? "");
+  const [isApplyingEdit, setIsApplyingEdit] = useState(false);
 
   const hasDynamic = dynamicFile && dynamicFile.content;
   const hasStatic = code && code.trim();
@@ -105,6 +140,36 @@ export function CodePanel({
       : filename ?? "";
 
   const isEmpty = !hasDynamic && !hasStatic;
+  const isInlineEdit = !!inlineEditConfig;
+
+  useEffect(() => {
+    if (!inlineEditConfig) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSelection((current) => current ?? { start: 1, end: Math.min(4, activeCode.split("\n").length) });
+        setShowInlineEdit(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeCode, inlineEditConfig]);
+
+  const applyInlineEdit = () => {
+    if (!inlineEditConfig?.generatedFile || !editInput.trim() || isApplyingEdit) return;
+
+    setIsApplyingEdit(true);
+    setTimeout(() => {
+      inlineEditConfig.onApply(
+        inlineEditConfig.generatedFile!.filename,
+        inlineEditConfig.generatedFile!.content
+      );
+      setIsApplyingEdit(false);
+      setShowInlineEdit(false);
+    }, 800);
+  };
 
   return (
     <section className="flex-1 flex flex-col bg-night min-w-0">
@@ -153,7 +218,63 @@ export function CodePanel({
             </div>
           </div>
         ) : (
-          <div className="text-ink">{highlightPython(activeCode)}</div>
+          <>
+            {isInlineEdit && showInlineEdit && selection && (
+              <div className="absolute top-3 left-14 right-12 z-10 rounded-md border border-outline-variant bg-surface-low shadow-xl overflow-hidden">
+                <div className="flex items-center">
+                  <input
+                    className="flex-1 bg-transparent px-3 py-2 font-body text-[12px] text-ink outline-none placeholder-ink-variant/40"
+                    placeholder="Edit selected code"
+                    value={editInput}
+                    onChange={(event) => setEditInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        applyInlineEdit();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    className="p-2 text-ink-variant hover:text-ink"
+                    onClick={() => setShowInlineEdit(false)}
+                    aria-label="Close inline edit"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-outline-variant/30 px-2 py-1.5">
+                  <span className="font-code text-[10px] text-ink-variant">
+                    Ctrl+K inline edit
+                  </span>
+                  <button
+                    className="flex items-center gap-1.5 rounded bg-ink px-2 py-1 text-[10px] font-bold uppercase text-night disabled:opacity-40"
+                    onClick={applyInlineEdit}
+                    disabled={isApplyingEdit || !editInput.trim()}
+                  >
+                    {isApplyingEdit ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <ArrowUp className="w-3 h-3" />
+                    )}
+                    {isApplyingEdit ? "Editing" : "Edit Selection"}
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className={`text-ink ${isInlineEdit && showInlineEdit ? "pt-16" : ""}`}>
+              {highlightPython(
+                activeCode,
+                isInlineEdit ? selection : null,
+                isInlineEdit
+                  ? (lineNumber) => {
+                      setSelection({ start: lineNumber, end: lineNumber });
+                      setShowInlineEdit(true);
+                    }
+                  : undefined
+              )}
+            </div>
+          </>
         )}
       </div>
     </section>

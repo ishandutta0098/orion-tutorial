@@ -138,6 +138,8 @@ export type ChatConfig = {
   conversations: Record<string, ChatMessage[]>;
   generatedFile?: { filename: string; content: string };
   initialCode?: { filename: string; content: string };
+  terminalLogs?: Record<string, LogLine[]>;
+  inlineEditPrompt?: string;
 };
 
 export type ChapterDef = {

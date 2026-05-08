@@ -73,11 +73,32 @@ bugbot = graph.compile()`,
       },
       {
         id: "hard",
-        label: "Hard Task",
-        description: "Generate image with Stable Diffusion (fails — missing module)",
+        label: "Watching the Retry Loop",
+        description: "Generate image with Stable Diffusion and watch retries fail on missing diffusers",
       },
     ],
     defaultPrompt: "Run the selected task through the self-correcting agent",
+    terminalLogs: {
+      easy: [
+        { tag: "PROCESS", text: "[generate] Attempt 1" },
+        { tag: "TOOL", text: "Generated fibonacci.py" },
+        { tag: "PROCESS", text: "[execute] python -c fibonacci.py" },
+        { tag: "OK", text: "[execute] SUCCESS: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]" },
+        { tag: "SUCCESS", text: "Task completed successfully in 1 attempt" },
+      ],
+      hard: [
+        { tag: "PROCESS", text: "[generate] Attempt 1" },
+        { tag: "TOOL", text: "Generated StableDiffusionPipeline code" },
+        { tag: "ERROR", text: "[execute] FAILED: ModuleNotFoundError: No module named 'diffusers'" },
+        { tag: "RETRY", text: "[generate] Attempt 2 (feeding error back to the model)" },
+        { tag: "TOOL", text: "Regenerated with torch_dtype=torch.float16" },
+        { tag: "ERROR", text: "[execute] FAILED: ModuleNotFoundError: No module named 'diffusers'" },
+        { tag: "RETRY", text: "[generate] Attempt 3 (last retry)" },
+        { tag: "TOOL", text: "Added install guidance, but the sandbox still cannot import diffusers" },
+        { tag: "ERROR", text: "[execute] FAILED: ModuleNotFoundError: No module named 'diffusers'" },
+        { tag: "WARN", text: "Max attempts reached; retry loop stopped" },
+      ],
+    },
     conversations: {
       easy: [
         {

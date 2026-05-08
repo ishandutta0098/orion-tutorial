@@ -62,33 +62,22 @@ result_with_rules = full_agent.invoke({
           content: `Generated without coding rules:
 
 \`\`\`python
-from typing import List, Dict, Any
+def sort_by_key(data, key):
+    return sorted(data, key=lambda x: x.get(key))
 
 
-def sort_dicts_by_key_value(dicts_list: List[Dict[str, Any]], key: str) -> List[Dict[str, Any]]:
-    """
-    Sort a list of dictionaries by a given key.
-    
-    :param dicts_list: List of dictionaries to sort
-    :param key: The key to sort by
-    :return: Sorted list of dictionaries
-    """
-    return sorted(dicts_list, key=lambda x: x.get(key, float('inf')))
-
-
-sample_data = [
+d = [
     {'name': 'Alice', 'age': 30},
     {'name': 'Bob', 'age': 25},
     {'name': 'Charlie', 'age': 35}
 ]
 
-sorted_data = sort_dicts_by_key_value(sample_data, 'age')
-print(sorted_data)
+print(sort_by_key(d, 'age'))
 \`\`\`
 
 Output: [{'name': 'Bob', 'age': 25}, {'name': 'Alice', 'age': 30}, {'name': 'Charlie', 'age': 35}]
 
-Note: Basic type hints present (from reviewer feedback), but no \`if __name__\` guard, no Google-style docstring.`,
+Note: This works, but it has no type hints, no docstring, no \`if __name__\` guard, and terse variable names like \`d\` and \`x\`.`,
         },
       ],
       strict: [

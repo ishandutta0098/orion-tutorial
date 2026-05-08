@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield, Search, GitBranch, Users, Hand, Layers, Clock } from "lucide-react";
-import type { ChatConfig, ChatMessage } from "@/lib/schema";
+import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield, Search, GitBranch, Users, Hand, Layers, Clock, Play } from "lucide-react";
+import type { ChatConfig, ChatMessage, LogLine } from "@/lib/schema";
 
 type Props = {
   chatConfig: ChatConfig;
   onFileGenerated?: (filename: string, content: string) => void;
+  onTerminalLogs?: (logs: LogLine[]) => void;
 };
 
-export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
+export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(chatConfig.defaultPrompt ?? "");
   const [disabled, setDisabled] = useState(false);
@@ -22,7 +23,11 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
     chatConfig.tasks?.[0]?.id ?? chatConfig.checkpoints?.[0]?.id ?? null
   );
   const [selectedToggle, setSelectedToggle] = useState<string>(
-    chatConfig.mode === "human-in-the-loop" ? "approve" : "raw"
+    chatConfig.mode === "human-in-the-loop"
+      ? "approve"
+      : chatConfig.mode === "rules-toggle"
+        ? "no_rules"
+        : "raw"
   );
   const [toolStates, setToolStates] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -73,6 +78,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
 
     const key = getConversationKey();
     const response = chatConfig.conversations[key] ?? chatConfig.conversations["default"] ?? [];
+    const terminalLogs = chatConfig.terminalLogs?.[key] ?? [];
 
     const thinkingDelay = 1200 + Math.random() * 800;
 
@@ -98,6 +104,15 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         }, 25);
       }, thinkingDelay);
     } else {
+      if (chatConfig.mode === "self-correction") {
+        onTerminalLogs?.([]);
+        terminalLogs.forEach((_, index) => {
+          setTimeout(() => {
+            onTerminalLogs?.(terminalLogs.slice(0, index + 1));
+          }, 300 + index * 350);
+        });
+      }
+
       setTimeout(() => {
         setLoading(false);
         setMessages((prev) => [...prev, ...response]);
@@ -106,7 +121,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
 
-        if (chatConfig.mode === "self-correction" && chatConfig.generatedFile) {
+        if (chatConfig.mode === "self-correction" && selectedTask === "easy" && chatConfig.generatedFile) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
 
@@ -122,7 +137,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
         }
 
-        const reusableModes: string[] = ["system-prompt", "structured-output", "rules-toggle", "codebase-search", "human-in-the-loop", "time-travel"];
+        const reusableModes: string[] = ["system-prompt", "structured-output", "self-correction", "rules-toggle", "codebase-search", "human-in-the-loop", "time-travel"];
         if (reusableModes.includes(chatConfig.mode)) {
           setInput(chatConfig.defaultPrompt ?? "");
         } else if (chatConfig.mode === "multi-turn") {
@@ -137,7 +152,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
         }
       }, thinkingDelay);
     }
-  }, [input, disabled, loading, getConversationKey, chatConfig, onFileGenerated, turnCount]);
+  }, [input, disabled, loading, getConversationKey, chatConfig, onFileGenerated, onTerminalLogs, selectedTask, turnCount]);
 
   return (
     <aside className="w-96 bg-surface-container-low border-l border-outline-variant flex flex-col shrink-0">
@@ -296,8 +311,12 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated }: Props) {
               disabled={disabled || loading || !input.trim()}
               className="bg-ink text-night h-7 px-3 rounded text-[10px] font-bold uppercase hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
-              <Send className="w-3 h-3" />
-              {loading ? "..." : "SEND"}
+              {chatConfig.mode === "self-correction" ? (
+                <Play className="w-3 h-3" />
+              ) : (
+                <Send className="w-3 h-3" />
+              )}
+              {loading ? "..." : chatConfig.mode === "self-correction" ? "EXECUTE" : "SEND"}
             </button>
           </div>
         </div>
@@ -581,8 +600,33 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         </span>
       </div>
       <div className="bg-surface-low p-3 rounded border border-outline-variant">
-        <p className="font-body text-[12px] text-ink-variant whitespace-pre-wrap">{message.content}</p>
+        <AssistantContent content={message.content} />
       </div>
+    </div>
+  );
+}
+
+function AssistantContent({ content }: { content: string }) {
+  const blocks = content.split(/```(?:\w+)?\n([\s\S]*?)```/g);
+
+  return (
+    <div className="space-y-2 font-body text-[12px] text-ink-variant">
+      {blocks.map((block, index) =>
+        index % 2 === 1 ? (
+          <pre
+            key={index}
+            className="overflow-x-auto rounded border border-outline-variant/40 bg-night p-2 font-code text-[11px] leading-5 text-ink"
+          >
+            <code>{block.trimEnd()}</code>
+          </pre>
+        ) : (
+          block.trim() && (
+            <p key={index} className="whitespace-pre-wrap">
+              {block.trim()}
+            </p>
+          )
+        )
+      )}
     </div>
   );
 }

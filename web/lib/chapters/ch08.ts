@@ -80,21 +80,13 @@ You can test this function with various inputs to see whether they are prime or 
       ],
       structured: [
         {
-          role: "tool",
-          toolName: "structured_output",
-          toolArgs: { model: "CodeOutput" },
-          content: `{
-  "explanation": "The function is_prime checks if a given number n is a prime number. It returns False for numbers ≤ 1, then checks for factors from 2 to √n. If any number divides n evenly, it returns False; otherwise True.",
-  "code": "def is_prime(n):\\n    if n <= 1:\\n        return False\\n    for i in range(2, int(n**0.5) + 1):\\n        if n % i == 0:\\n            return False\\n    return True\\n\\n# Example usage:\\n# print(is_prime(11))  # Output: True\\n# print(is_prime(4))   # Output: False"
-}`,
-        },
-        {
           role: "assistant",
           content: `✓ Structured output received (CodeOutput)
 
-**Explanation:** The function is_prime checks if a given number n is a prime number. It returns False for numbers ≤ 1, then checks for factors from 2 to √n. If any number divides n evenly, it returns False; otherwise True.
+Explanation:
+The function is_prime checks if a given number n is a prime number. It returns False for numbers ≤ 1, then checks for factors from 2 to √n. If any number divides n evenly, it returns False; otherwise True.
 
-**Code:**
+Code:
 \`\`\`python
 def is_prime(n):
     if n <= 1:
@@ -105,7 +97,7 @@ def is_prime(n):
     return True
 \`\`\`
 
-Notice: clean separation — no markdown wrapping, no mixed explanations. Each field is independently accessible.`,
+Notice: the structured response still has separate fields internally, but the UI can present each field in the right format.`,
         },
       ],
     },

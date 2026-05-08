@@ -9,11 +9,13 @@ import { InteractiveChatPanel } from "./InteractiveChatPanel";
 import { AIAssistantPanel } from "./AIAssistantPanel";
 import { StatusFooter } from "./StatusFooter";
 import { CommandPalette } from "./CommandPalette";
-import type { ChapterDef } from "@/lib/schema";
+import { TerminalLogPanel } from "./TerminalLogPanel";
+import type { ChapterDef, LogLine } from "@/lib/schema";
 
 export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
   const initialCode = chapter.chatConfig?.initialCode ?? null;
   const [dynamicFile, setDynamicFile] = useState<{ filename: string; content: string } | null>(initialCode);
+  const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     setDynamicFile({ filename, content });
@@ -21,8 +23,10 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
 
   const filename = chapter.codeFilename ?? chapter.slug.replace(/-/g, "_") + ".py";
   const code = chapter.codeContent ?? "";
+  const isInlineEdit = chapter.chatConfig?.mode === "inline-edit";
+  const isSelfCorrection = chapter.chatConfig?.mode === "self-correction";
 
-  const hasInteractiveChat = !!chapter.chatConfig;
+  const hasInteractiveChat = !!chapter.chatConfig && !isInlineEdit;
   const shouldShowEmptyPanel = hasInteractiveChat && !code && !dynamicFile;
 
   return (
@@ -39,17 +43,28 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
               backendCode={chapter.backendCode}
               backendFilename={chapter.backendFilename}
               dynamicFile={dynamicFile}
+              inlineEditConfig={
+                isInlineEdit
+                  ? {
+                      prompt: chapter.chatConfig?.inlineEditPrompt,
+                      generatedFile: chapter.chatConfig?.generatedFile,
+                      onApply: handleFileGenerated,
+                    }
+                  : undefined
+              }
             />
+            {isSelfCorrection && <TerminalLogPanel logs={terminalLogs} />}
             <StatusFooter />
           </div>
           {hasInteractiveChat ? (
             <InteractiveChatPanel
               chatConfig={chapter.chatConfig!}
               onFileGenerated={handleFileGenerated}
+              onTerminalLogs={setTerminalLogs}
             />
-          ) : (
+          ) : !isInlineEdit ? (
             <AIAssistantPanel exchange={chapter.aiExchange} />
-          )}
+          ) : null}
         </main>
       </div>
       <CommandPalette />
