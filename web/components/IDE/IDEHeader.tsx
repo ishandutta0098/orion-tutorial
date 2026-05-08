@@ -1,8 +1,8 @@
 "use client";
 
-import { Search, Terminal, Settings } from "lucide-react";
+import { RotateCcw, Search, Terminal, Settings } from "lucide-react";
 
-export function IDEHeader() {
+export function IDEHeader({ onReset }: { onReset?: () => void }) {
   return (
     <header className="bg-surface-container-low flex justify-between items-center w-full px-4 h-12 border-b border-outline-variant z-50 shrink-0">
       <div className="flex items-center gap-4">
@@ -22,6 +22,15 @@ export function IDEHeader() {
         </div>
       </div>
       <div className="flex items-center gap-4">
+        {onReset && (
+          <button
+            onClick={onReset}
+            className="flex items-center gap-1.5 rounded border border-outline-variant bg-surface-high px-2.5 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-ink-variant transition-colors hover:text-ink"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </button>
+        )}
         <div className="bg-surface-high flex items-center px-2 py-1 rounded border border-outline-variant w-64">
           <Search className="w-4 h-4 text-ink-variant mr-2" />
           <input

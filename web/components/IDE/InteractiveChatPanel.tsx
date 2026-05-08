@@ -8,9 +8,10 @@ type Props = {
   chatConfig: ChatConfig;
   onFileGenerated?: (filename: string, content: string) => void;
   onTerminalLogs?: (logs: LogLine[]) => void;
+  resetKey?: number;
 };
 
-export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs }: Props) {
+export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs, resetKey }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(chatConfig.defaultPrompt ?? "");
   const [disabled, setDisabled] = useState(false);
@@ -41,6 +42,32 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streamingText, loading]);
+
+  useEffect(() => {
+    setMessages([]);
+    setInput(chatConfig.defaultPrompt ?? "");
+    setDisabled(false);
+    setLoading(false);
+    setSelectedModel(null);
+    setSelectedPrompt(chatConfig.systemPrompts?.[0]?.id ?? null);
+    setSelectedTask(chatConfig.tasks?.[0]?.id ?? chatConfig.checkpoints?.[0]?.id ?? null);
+    setSelectedToggle(
+      chatConfig.mode === "human-in-the-loop"
+        ? "approve"
+        : chatConfig.mode === "rules-toggle"
+          ? "no_rules"
+          : "raw"
+    );
+    setToolStates(() => {
+      const initial: Record<string, boolean> = {};
+      chatConfig.tools?.forEach((tool) => {
+        initial[tool.id] = tool.enabled;
+      });
+      return initial;
+    });
+    setStreamingText(null);
+    setTurnCount(0);
+  }, [chatConfig, resetKey]);
 
   const getConversationKey = useCallback((): string => {
     switch (chatConfig.mode) {

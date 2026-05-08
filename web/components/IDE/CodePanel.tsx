@@ -109,6 +109,7 @@ export function CodePanel({
   backendFilename,
   dynamicFile,
   inlineEditConfig,
+  resetKey,
 }: {
   code?: string;
   filename?: string;
@@ -116,12 +117,13 @@ export function CodePanel({
   backendFilename?: string;
   dynamicFile?: { filename: string; content: string } | null;
   inlineEditConfig?: InlineEditConfig;
+  resetKey?: number;
 }) {
   const [view, setView] = useState<"example" | "backend">("example");
   const [selection, setSelection] = useState<LineSelection | null>(
     inlineEditConfig ? { start: 1, end: 4 } : null
   );
-  const [showInlineEdit, setShowInlineEdit] = useState(!!inlineEditConfig);
+  const [showInlineEdit, setShowInlineEdit] = useState(false);
   const [editInput, setEditInput] = useState(inlineEditConfig?.prompt ?? "");
   const [isApplyingEdit, setIsApplyingEdit] = useState(false);
 
@@ -156,6 +158,14 @@ export function CodePanel({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeCode, inlineEditConfig]);
+
+  useEffect(() => {
+    setView("example");
+    setSelection(inlineEditConfig ? { start: 1, end: Math.min(4, activeCode.split("\n").length) } : null);
+    setShowInlineEdit(false);
+    setEditInput(inlineEditConfig?.prompt ?? "");
+    setIsApplyingEdit(false);
+  }, [activeCode, inlineEditConfig, resetKey]);
 
   const applyInlineEdit = () => {
     if (!inlineEditConfig?.generatedFile || !editInput.trim() || isApplyingEdit) return;
@@ -269,7 +279,6 @@ export function CodePanel({
                 isInlineEdit
                   ? (lineNumber) => {
                       setSelection({ start: lineNumber, end: lineNumber });
-                      setShowInlineEdit(true);
                     }
                   : undefined
               )}

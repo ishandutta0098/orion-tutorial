@@ -16,10 +16,17 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
   const initialCode = chapter.chatConfig?.initialCode ?? null;
   const [dynamicFile, setDynamicFile] = useState<{ filename: string; content: string } | null>(initialCode);
   const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
+  const [resetKey, setResetKey] = useState(0);
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     setDynamicFile({ filename, content });
   }, []);
+
+  const handleReset = useCallback(() => {
+    setDynamicFile(initialCode);
+    setTerminalLogs([]);
+    setResetKey((key) => key + 1);
+  }, [initialCode]);
 
   const filename = chapter.codeFilename ?? chapter.slug.replace(/-/g, "_") + ".py";
   const code = chapter.codeContent ?? "";
@@ -31,7 +38,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-night text-ink">
-      <IDEHeader />
+      <IDEHeader onReset={handleReset} />
       <div className="flex flex-1 overflow-hidden">
         <ActivityBar />
         <FileExplorer />
@@ -52,6 +59,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
                     }
                   : undefined
               }
+              resetKey={resetKey}
             />
             {isSelfCorrection && <TerminalLogPanel logs={terminalLogs} />}
             <StatusFooter />
@@ -61,6 +69,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
               chatConfig={chapter.chatConfig!}
               onFileGenerated={handleFileGenerated}
               onTerminalLogs={setTerminalLogs}
+              resetKey={resetKey}
             />
           ) : !isInlineEdit ? (
             <AIAssistantPanel exchange={chapter.aiExchange} />
