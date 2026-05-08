@@ -4,6 +4,7 @@ export const ch02: ChapterDef = {
   slug: "defining-tools",
   number: 2,
   notebook: "Notebook 01",
+  subtopicLabel: "1.2 Tools",
   title: "Defining Tools",
   subtitle: "Give your agent capabilities with @tool decorator, docstrings, and type hints.",
   cursorFeature: "Chat Mode",
@@ -47,20 +48,20 @@ for t in tools:
     tools: [
       { id: "read_file", name: "read_file", enabled: false },
       { id: "write_file", name: "write_file", enabled: false },
-      { id: "list_directory", name: "list_directory", enabled: true },
+      { id: "list_directory", name: "list_directory", enabled: false },
     ],
     defaultPrompt: "What files are in the current directory?",
     conversations: {
       enabled: [
         {
           role: "tool",
-          content: "notebook_01/\n  setting_up_llm.py\n  defining_tools.py\n  agent_graph.py\n  code_generation.py\n  system_prompt.py\n  streaming.py\n  multi_turn.py\nnotebook_02/\n  error_detection.py\n  sandbox_execution.py\n  self_correction_loop.py\n  retry_strategies.py\n  validation.py\nnotebook_03/\n  production_config.py\n  logging_monitoring.py\n  rate_limiting.py\n  deployment.py",
+          content: "sample_project/\n  app.py\n  chat.py\n  config.py\norion/\n  defining_tools.py\ngenerated/",
           toolName: "list_directory",
           toolArgs: { directory: "." },
         },
         {
           role: "assistant",
-          content: "The current directory contains 3 notebook folders:\n\n**notebook_01/** — Code Generator with Tools\n- setting_up_llm.py\n- defining_tools.py\n- agent_graph.py\n- code_generation.py\n- system_prompt.py\n- streaming.py\n- multi_turn.py\n\n**notebook_02/** — Self-Correcting Agent\n- error_detection.py\n- sandbox_execution.py\n- self_correction_loop.py\n- retry_strategies.py\n- validation.py\n\n**notebook_03/** — Production Agent\n- production_config.py\n- logging_monitoring.py\n- rate_limiting.py\n- deployment.py",
+          content: "The current Explorer contains:\n\n**sample_project/**\n- app.py\n- chat.py\n- config.py\n\n**orion/**\n- defining_tools.py\n\n**generated/**\n- empty for now",
         },
       ],
       disabled: [
