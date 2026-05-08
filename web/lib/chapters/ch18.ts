@@ -4,6 +4,7 @@ export const ch18: ChapterDef = {
   slug: "time-travel",
   number: 18,
   notebook: "Notebook 03",
+  subtopicLabel: "3.6 Time-Travel Debugging",
   title: "Time-Travel Debugging",
   subtitle: "Inspect and replay any checkpoint in the agent's execution history.",
   cursorFeature: "Agent Mode",
