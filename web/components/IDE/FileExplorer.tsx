@@ -7,10 +7,6 @@ import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
 import { chapters } from "@/lib/registry";
 import type { NotebookId, WorkspaceFile } from "@/lib/schema";
 
-function slugToFilename(slug: string): string {
-  return slug.replace(/-/g, "_") + ".py";
-}
-
 const NOTEBOOK_LABELS: Record<NotebookId, string> = {
   "Notebook 01": "notebook_01",
   "Notebook 02": "notebook_02",
@@ -100,7 +96,7 @@ export function TutorialExplorer() {
                     >
                       <File className="w-3.5 h-3.5 shrink-0" />
                       <span className={`font-body text-[11px] truncate ${isActive ? "font-semibold" : ""}`}>
-                        {slugToFilename(ch.slug)}
+                        {ch.subtopicLabel ?? ch.title}
                       </span>
                     </Link>
                   );
