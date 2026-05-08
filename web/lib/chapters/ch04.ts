@@ -4,6 +4,7 @@ export const ch04: ChapterDef = {
   slug: "code-generation",
   number: 4,
   notebook: "Notebook 01",
+  subtopicLabel: "1.4 Code Generation",
   title: "Code Generation Task",
   subtitle: "Have the agent generate code and write it to files using tool calls.",
   cursorFeature: "Chat Mode",
