@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { IDEHeader } from "./IDEHeader";
 import { ActivityBar, type ActivityView } from "./ActivityBar";
 import { FileExplorer, TutorialExplorer } from "./FileExplorer";
@@ -8,8 +8,9 @@ import { CodePanel } from "./CodePanel";
 import { InteractiveChatPanel } from "./InteractiveChatPanel";
 import { AIAssistantPanel } from "./AIAssistantPanel";
 import { StatusFooter } from "./StatusFooter";
-import { CommandPalette } from "./CommandPalette";
 import { TerminalLogPanel } from "./TerminalLogPanel";
+import { AgentGraphVisualizer } from "./AgentGraphVisualizer";
+import { useWorkspace } from "@/lib/WorkspaceContext";
 import type { ChapterDef, LogLine, WorkspaceFile } from "@/lib/schema";
 
 const SAMPLE_PROJECT_FILES: Record<string, string> = {
@@ -93,34 +94,80 @@ function toGeneratedPath(filename: string): string {
 }
 
 export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
+  const {
+    generatedFiles,
+    addGeneratedFile,
+    resetChapterFiles,
+    resetAllGeneratedFiles,
+  } = useWorkspace();
   const initialCode = chapter.chatConfig?.initialCode ?? null;
   const initialWorkspace = useMemo(() => createInitialWorkspace(chapter), [chapter]);
+  const globalWorkspaceFiles = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.values(generatedFiles).map((file) => [file.path, { path: file.path, content: file.content }])
+      ),
+    [generatedFiles]
+  );
   const [dynamicFile, setDynamicFile] = useState<{ filename: string; content: string } | null>(
     initialCode ? { filename: toGeneratedPath(initialCode.filename), content: initialCode.content } : null
   );
-  const [workspaceFiles, setWorkspaceFiles] = useState<Record<string, WorkspaceFile>>(initialWorkspace);
+  const [workspaceFiles, setWorkspaceFiles] = useState<Record<string, WorkspaceFile>>({
+    ...initialWorkspace,
+    ...globalWorkspaceFiles,
+  });
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
   const [resetKey, setResetKey] = useState(0);
   const [activeView, setActiveView] = useState<ActivityView>("tutorials");
+  const [graphRunKey, setGraphRunKey] = useState(0);
+
+  useEffect(() => {
+    setWorkspaceFiles({
+      ...initialWorkspace,
+      ...globalWorkspaceFiles,
+    });
+  }, [globalWorkspaceFiles, initialWorkspace]);
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     const path = toGeneratedPath(filename);
     setDynamicFile({ filename: path, content });
     setSelectedFilePath(path);
+    addGeneratedFile(chapter.slug, path, content);
     setWorkspaceFiles((files) => ({
       ...files,
       [path]: { path, content },
     }));
-  }, []);
+  }, [addGeneratedFile, chapter.slug]);
 
   const handleReset = useCallback(() => {
+    const remainingGeneratedFiles = Object.fromEntries(
+      Object.values(generatedFiles)
+        .filter((file) => file.ownerSlug !== chapter.slug)
+        .map((file) => [file.path, { path: file.path, content: file.content }])
+    );
+
+    resetChapterFiles(chapter.slug);
+    setWorkspaceFiles({
+      ...initialWorkspace,
+      ...remainingGeneratedFiles,
+    });
+    setDynamicFile(initialCode ? { filename: toGeneratedPath(initialCode.filename), content: initialCode.content } : null);
+    setSelectedFilePath(null);
+    setTerminalLogs([]);
+    setResetKey((key) => key + 1);
+    setGraphRunKey(0);
+  }, [chapter.slug, generatedFiles, initialCode, initialWorkspace, resetChapterFiles]);
+
+  const handleProjectReset = useCallback(() => {
+    resetAllGeneratedFiles();
     setWorkspaceFiles(initialWorkspace);
     setDynamicFile(initialCode ? { filename: toGeneratedPath(initialCode.filename), content: initialCode.content } : null);
     setSelectedFilePath(null);
     setTerminalLogs([]);
     setResetKey((key) => key + 1);
-  }, [initialCode, initialWorkspace]);
+    setGraphRunKey(0);
+  }, [initialCode, initialWorkspace, resetAllGeneratedFiles]);
 
   const handleStaticExecute = useCallback(() => {
     const targetFile = chapter.backendFilename
@@ -148,7 +195,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-night text-ink">
-      <IDEHeader onReset={handleReset} />
+      <IDEHeader onReset={handleReset} onResetAll={handleProjectReset} />
       <div className="flex flex-1 overflow-hidden">
         <ActivityBar activeView={activeView} onSelectView={setActiveView} />
         {activeView === "tutorials" ? (
@@ -162,6 +209,9 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
         )}
         <main className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0">
+            {chapter.chatConfig?.graphVisualization && (
+              <AgentGraphVisualizer runKey={graphRunKey} />
+            )}
             <CodePanel
               code={shouldShowEmptyPanel ? undefined : code}
               filename={shouldShowEmptyPanel ? undefined : filename}
@@ -188,6 +238,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
               chatConfig={chapter.chatConfig!}
               onFileGenerated={handleFileGenerated}
               onTerminalLogs={setTerminalLogs}
+              onExecuteStart={() => setGraphRunKey((key) => key + 1)}
               resetKey={resetKey}
             />
           ) : !isInlineEdit ? (
@@ -195,7 +246,6 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
           ) : null}
         </main>
       </div>
-      <CommandPalette />
     </div>
   );
 }
