@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { IDEHeader } from "./IDEHeader";
-import { ActivityBar } from "./ActivityBar";
-import { FileExplorer } from "./FileExplorer";
+import { ActivityBar, type ActivityView } from "./ActivityBar";
+import { FileExplorer, TutorialExplorer } from "./FileExplorer";
 import { CodePanel } from "./CodePanel";
 import { InteractiveChatPanel } from "./InteractiveChatPanel";
 import { AIAssistantPanel } from "./AIAssistantPanel";
@@ -102,6 +102,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
   const [resetKey, setResetKey] = useState(0);
+  const [activeView, setActiveView] = useState<ActivityView>("tutorials");
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     const path = toGeneratedPath(filename);
@@ -149,12 +150,16 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
     <div className="h-screen flex flex-col overflow-hidden bg-night text-ink">
       <IDEHeader onReset={handleReset} />
       <div className="flex flex-1 overflow-hidden">
-        <ActivityBar />
-        <FileExplorer
-          files={Object.values(workspaceFiles)}
-          selectedFilePath={selectedFilePath}
-          onSelectFile={setSelectedFilePath}
-        />
+        <ActivityBar activeView={activeView} onSelectView={setActiveView} />
+        {activeView === "tutorials" ? (
+          <TutorialExplorer />
+        ) : (
+          <FileExplorer
+            files={Object.values(workspaceFiles)}
+            selectedFilePath={selectedFilePath}
+            onSelectFile={setSelectedFilePath}
+          />
+        )}
         <main className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0">
             <CodePanel
