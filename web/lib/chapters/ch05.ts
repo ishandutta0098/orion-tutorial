@@ -4,6 +4,7 @@ export const ch05: ChapterDef = {
   slug: "system-prompt",
   number: 5,
   notebook: "Notebook 01",
+  subtopicLabel: "1.5 System Prompt",
   title: "System Prompt & Rules",
   subtitle: "Shape agent behavior with system prompts — the Cursor Rules equivalent.",
   cursorFeature: "Cursor Rules",
