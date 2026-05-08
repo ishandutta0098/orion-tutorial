@@ -1,18 +1,26 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield, Search, GitBranch, Users, Hand, Layers, Clock, Play } from "lucide-react";
-import type { ChatConfig, ChatMessage, LogLine } from "@/lib/schema";
+import { Bot, Wrench, Cpu, ToggleLeft, ToggleRight, Zap, Shield, Hand, Clock, Play } from "lucide-react";
+import type { ChatConfig, ChatMessage, GraphRunStep, LogLine } from "@/lib/schema";
 
 type Props = {
   chatConfig: ChatConfig;
   onFileGenerated?: (filename: string, content: string) => void;
   onTerminalLogs?: (logs: LogLine[]) => void;
-  onExecuteStart?: () => void;
+  onGraphReset?: () => void;
+  onGraphStep?: (step: GraphRunStep) => void;
   resetKey?: number;
 };
 
-export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLogs, onExecuteStart, resetKey }: Props) {
+export function InteractiveChatPanel({
+  chatConfig,
+  onFileGenerated,
+  onTerminalLogs,
+  onGraphReset,
+  onGraphStep,
+  resetKey,
+}: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(chatConfig.defaultPrompt ?? "");
   const [disabled, setDisabled] = useState(false);
@@ -99,13 +107,35 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
     if (!input.trim() || disabled || loading) return;
 
     const userMsg: ChatMessage = { role: "user", content: input.trim() };
-    onExecuteStart?.();
+    onGraphReset?.();
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     const key = getConversationKey();
     const response = chatConfig.conversations[key] ?? chatConfig.conversations["default"] ?? [];
+    const graphRunSteps = chatConfig.graphRunSteps?.[key] ?? (
+      chatConfig.graphVisualization
+        ? response
+            .filter((message) => message.role === "tool")
+            .map((message): GraphRunStep => ({
+              node: message.toolName ?? "agent",
+              title: message.toolArgs
+                ? Object.entries(message.toolArgs).map(([arg, value]) => `${arg}: ${value}`).join(", ")
+                : message.toolName ?? "tool",
+              detail: message.content,
+              status: message.toolArgs?.status === "FAILED"
+                ? "error"
+                : message.toolArgs?.status === "SUCCESS" || message.toolArgs?.approved === "true"
+                  ? "success"
+                  : undefined,
+            }))
+        : []
+    );
+    const chatResponse = chatConfig.graphVisualization
+      && (chatConfig.mode === "self-correction" || chatConfig.mode === "reflection")
+      ? response.filter((message) => message.role !== "tool")
+      : response;
     const runFile = chatConfig.mode === "multi-turn" ? chatConfig.turnFiles?.[key] : chatConfig.generatedFile;
     const generatedPath = runFile
       ? runFile.filename.includes("/") ? runFile.filename : `generated/${runFile.filename}`
@@ -129,11 +159,16 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
         onTerminalLogs?.(terminalLogs.slice(0, index + 1));
       }, 300 + index * 350);
     });
+    graphRunSteps.forEach((step, index) => {
+      setTimeout(() => {
+        onGraphStep?.(step);
+      }, 300 + index * 350);
+    });
 
     if (chatConfig.mode === "streaming") {
       setTimeout(() => {
         setLoading(false);
-        const fullText = response
+        const fullText = chatResponse
           .filter((m) => m.role === "assistant")
           .map((m) => m.content)
           .join("\n");
@@ -146,7 +181,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
           if (idx >= fullText.length) {
             clearInterval(interval);
             setStreamingText(null);
-            setMessages((prev) => [...prev, ...response]);
+            setMessages((prev) => [...prev, ...chatResponse]);
             setDisabled(true);
           }
         }, 25);
@@ -154,7 +189,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
     } else {
       setTimeout(() => {
         setLoading(false);
-        setMessages((prev) => [...prev, ...response]);
+        setMessages((prev) => [...prev, ...chatResponse]);
 
         if ((chatConfig.mode === "code-gen" || chatConfig.mode === "inline-edit") && chatConfig.generatedFile) {
           onFileGenerated?.(chatConfig.generatedFile.filename, chatConfig.generatedFile.content);
@@ -195,7 +230,7 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
         }
       }, thinkingDelay);
     }
-  }, [input, disabled, loading, getConversationKey, chatConfig, onExecuteStart, onFileGenerated, onTerminalLogs, selectedTask, turnCount]);
+  }, [input, disabled, loading, getConversationKey, chatConfig, onGraphReset, onGraphStep, onFileGenerated, onTerminalLogs, selectedTask, selectedToggle, turnCount]);
 
   return (
     <aside className="w-96 bg-surface-container-low border-l border-outline-variant flex flex-col shrink-0">
@@ -244,16 +279,26 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
       )}
 
       {chatConfig.mode === "rules-toggle" && (
-        <ToggleSection
-          label="CODING RULES"
-          icon={<Shield className="w-4 h-4 text-primary" />}
-          options={[
-            { id: "no_rules", label: "No Rules" },
-            { id: "strict", label: "Strict Rules" },
-          ]}
-          selected={selectedToggle}
-          onSelect={setSelectedToggle}
-        />
+        <div className="border-b border-outline-variant/20">
+          <ToggleSection
+            label="CODING RULES"
+            icon={<Shield className="w-4 h-4 text-primary" />}
+            options={[
+              { id: "no_rules", label: "No Rules" },
+              { id: "strict", label: "Strict Rules" },
+            ]}
+            selected={selectedToggle}
+            onSelect={setSelectedToggle}
+            hasBorder={false}
+          />
+          {selectedToggle === "strict" && chatConfig.rules && (
+            <div className="mx-3 mb-3 max-h-32 overflow-y-auto rounded border border-outline-variant/30 bg-surface-low p-2">
+              <p className="font-code text-[10px] leading-4 text-ink-variant whitespace-pre-wrap">
+                {chatConfig.rules}
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {chatConfig.mode === "human-in-the-loop" && (
@@ -369,15 +414,17 @@ function ToggleSection({
   options,
   selected,
   onSelect,
+  hasBorder = true,
 }: {
   label: string;
   icon: React.ReactNode;
   options: { id: string; label: string }[];
   selected: string;
   onSelect: (id: string) => void;
+  hasBorder?: boolean;
 }) {
   return (
-    <div className="p-3 border-b border-outline-variant/20 space-y-2">
+    <div className={`p-3 space-y-2 ${hasBorder ? "border-b border-outline-variant/20" : ""}`}>
       <div className="flex items-center gap-2 mb-2">
         {icon}
         <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-ink-variant">
@@ -634,13 +681,27 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         </span>
       </div>
       <div className="bg-surface-low p-3 rounded border border-outline-variant">
-        <AssistantContent content={message.content} />
+        <AssistantContent content={message.content} renderAs={message.renderAs} />
       </div>
     </div>
   );
 }
 
-function AssistantContent({ content }: { content: string }) {
+function AssistantContent({
+  content,
+  renderAs = "markdown",
+}: {
+  content: string;
+  renderAs?: ChatMessage["renderAs"];
+}) {
+  if (renderAs === "plain") {
+    return (
+      <pre className="whitespace-pre-wrap font-code text-[11px] leading-5 text-ink-variant">
+        {content}
+      </pre>
+    );
+  }
+
   const blocks = content.split(/```(?:\w+)?\n([\s\S]*?)```/g);
 
   return (
