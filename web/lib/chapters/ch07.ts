@@ -1,9 +1,86 @@
 import type { ChapterDef } from "../schema";
 
+const loggerV1 = `import os
+import logging
+
+
+class SimpleLogger:
+    """A simple logger that writes timestamped messages to a log file."""
+
+    def __init__(self, log_file: str) -> None:
+        """Initialize the SimpleLogger with a specified log file."""
+        self.log_file = log_file
+        self.setup_logger()
+
+    def setup_logger(self) -> None:
+        """Set up the logger configuration."""
+        logging.basicConfig(
+            filename=self.log_file,
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+    def log(self, message: str) -> None:
+        """Log an info message with a timestamp."""
+        logging.info(message)
+
+    def log_error(self, message: str) -> None:
+        """Log an error message with a timestamp."""
+        logging.error(message)`;
+
+const loggerV2 = `import logging
+from enum import Enum
+
+
+class LogLevel(Enum):
+    """Supported log levels."""
+
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+
+
+class SimpleLogger:
+    """A simple logger that writes timestamped messages to a log file."""
+
+    def __init__(self, log_file: str) -> None:
+        """Initialize the SimpleLogger with a specified log file."""
+        self.log_file = log_file
+        self.setup_logger()
+
+    def setup_logger(self) -> None:
+        """Set up the logger configuration."""
+        logging.basicConfig(
+            filename=self.log_file,
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+    def log(self, message: str, level: LogLevel = LogLevel.INFO) -> None:
+        """Log a message with the selected level."""
+        if level == LogLevel.ERROR:
+            logging.error(message)
+        elif level == LogLevel.WARNING:
+            logging.warning(message)
+        else:
+            logging.info(message)
+
+    def log_error(self, message: str) -> None:
+        """Log an error message with a timestamp."""
+        self.log(message, LogLevel.ERROR)
+
+    def filter_logs(self, level: LogLevel) -> list[str]:
+        """Return log lines that match the selected level."""
+        with open(self.log_file, "r") as log_file:
+            return [line for line in log_file if f" - {level.value} - " in line]`;
+
 export const ch07: ChapterDef = {
   slug: "multi-turn",
   number: 7,
   notebook: "Notebook 01",
+  subtopicLabel: "1.7 Multi Turn Conversation",
   title: "Multi-Turn Conversations",
   subtitle: "Maintain message history across turns for contextual follow-ups.",
   cursorFeature: "Chat Mode",
@@ -44,6 +121,20 @@ print("=== Turn 2 complete ===")
 print(open("generated/logger.py").read())`,
   chatConfig: {
     mode: "multi-turn",
+    initialCode: {
+      filename: "logger.py",
+      content: loggerV1,
+    },
+    turnFiles: {
+      turn_1: {
+        filename: "logger.py",
+        content: loggerV1,
+      },
+      turn_2: {
+        filename: "logger.py",
+        content: loggerV2,
+      },
+    },
     defaultPrompt: "Create 'generated/logger.py' with a SimpleLogger class that writes timestamped messages to a log file.",
     conversations: {
       turn_1: [
