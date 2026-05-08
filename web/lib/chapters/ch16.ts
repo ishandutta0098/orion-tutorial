@@ -4,6 +4,7 @@ export const ch16: ChapterDef = {
   slug: "human-in-the-loop",
   number: 16,
   notebook: "Notebook 03",
+  subtopicLabel: "3.4 Human-in-the-Loop",
   title: "Human-in-the-Loop",
   subtitle: "Pause for approval before applying changes with interrupt and Command.",
   cursorFeature: "Agent Mode",
