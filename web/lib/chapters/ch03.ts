@@ -42,6 +42,46 @@ print("Graph compiled")`,
   chatConfig: {
     mode: "agent-chat",
     graphVisualization: true,
+    graphNodes: [
+      { id: "__start__", label: "__start__" },
+      { id: "agent", label: "agent" },
+      { id: "tools", label: "tools" },
+      { id: "__end__", label: "__end__" },
+    ],
+    graphEdges: [
+      { from: "__start__", to: "agent" },
+      { from: "agent", to: "tools" },
+      { from: "tools", to: "agent" },
+      { from: "agent", to: "__end__", style: "dashed" },
+    ],
+    animationSequence: ["__start__", "agent", "tools", "agent", "__end__"],
+    graphRunSteps: {
+      default: [
+        {
+          node: "agent",
+          title: "Model call",
+          detail: "The agent decides it needs the list_directory tool.",
+        },
+        {
+          node: "tools",
+          title: "list_directory",
+          detail: "sample_project/\n  app.py\n  chat.py\n  config.py\norion/\n  agent_graph.py\ngenerated/",
+          status: "success",
+        },
+        {
+          node: "agent",
+          title: "Final answer",
+          detail: "The tool output is summarized for the user.",
+          status: "success",
+        },
+        {
+          node: "__end__",
+          title: "Done",
+          detail: "The graph exits after the agent returns a final answer.",
+          status: "success",
+        },
+      ],
+    },
     defaultPrompt: "List the files in the current directory",
     conversations: {
       default: [
