@@ -4,6 +4,7 @@ export const ch12: ChapterDef = {
   slug: "inline-edit",
   number: 12,
   notebook: "Notebook 02",
+  subtopicLabel: "2.5 Inline Edit + Rules",
   title: "Inline Edit + Rules",
   subtitle: "Modify existing code based on instructions while enforcing coding rules.",
   cursorFeature: "Inline Edit",
