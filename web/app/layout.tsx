@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TopNav } from "@/components/AppShell/TopNav";
 import { Footer } from "@/components/AppShell/Footer";
+import { WorkspaceProvider } from "@/lib/WorkspaceContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,11 +33,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="bg-night text-ink font-body min-h-screen">
-        <TopNav />
-        <main className="pt-16 min-h-screen flex flex-col">
-          <div className="flex-1">{children}</div>
-          <Footer />
-        </main>
+        <WorkspaceProvider>
+          <TopNav />
+          <main className="pt-16 min-h-screen flex flex-col">
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </main>
+        </WorkspaceProvider>
       </body>
     </html>
   );
