@@ -4,6 +4,7 @@ export const ch14: ChapterDef = {
   slug: "orchestrator-state",
   number: 14,
   notebook: "Notebook 03",
+  subtopicLabel: "3.2 Orchestrator State",
   title: "Planner & Orchestrator State",
   subtitle: "Design the state schema that tracks feature requests through the full agent lifecycle.",
   cursorFeature: "Agent Mode",
