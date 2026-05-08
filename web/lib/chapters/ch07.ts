@@ -121,10 +121,6 @@ print("=== Turn 2 complete ===")
 print(open("generated/logger.py").read())`,
   chatConfig: {
     mode: "multi-turn",
-    initialCode: {
-      filename: "logger.py",
-      content: loggerV1,
-    },
     turnFiles: {
       turn_1: {
         filename: "logger.py",
