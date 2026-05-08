@@ -100,6 +100,7 @@ export type ChatMessage = {
   content: string;
   toolName?: string;
   toolArgs?: Record<string, string>;
+  renderAs?: "markdown" | "plain";
 };
 
 export type ModelOption = {
@@ -132,6 +133,25 @@ export type CheckpointOption = {
   description: string;
 };
 
+export type GraphNodeDef = {
+  id: string;
+  label: string;
+};
+
+export type GraphEdgeDef = {
+  from: string;
+  to: string;
+  label?: string;
+  style?: "solid" | "dashed";
+};
+
+export type GraphRunStep = {
+  node: string;
+  title: string;
+  detail: string;
+  status?: "pending" | "success" | "error" | "warning";
+};
+
 export type ChatConfig = {
   mode: ChatMode;
   models?: ModelOption[];
@@ -147,6 +167,11 @@ export type ChatConfig = {
   terminalLogs?: Record<string, LogLine[]>;
   inlineEditPrompt?: string;
   graphVisualization?: boolean;
+  graphNodes?: GraphNodeDef[];
+  graphEdges?: GraphEdgeDef[];
+  animationSequence?: string[];
+  graphRunSteps?: Record<string, GraphRunStep[]>;
+  rules?: string;
 };
 
 export type ChapterDef = {
