@@ -105,9 +105,28 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
 
     const key = getConversationKey();
     const response = chatConfig.conversations[key] ?? chatConfig.conversations["default"] ?? [];
-    const terminalLogs = chatConfig.terminalLogs?.[key] ?? [];
+    const generatedPath = chatConfig.generatedFile
+      ? `generated/${chatConfig.generatedFile.filename}`
+      : null;
+    const fallbackTerminalLogs: LogLine[] = [
+        { tag: "PROCESS", text: `[execute] ${chatConfig.mode} tutorial` },
+        ...(generatedPath
+          ? [
+              { tag: "TOOL" as const, text: "mkdir -p generated" },
+              { tag: "TOOL" as const, text: `write ${generatedPath}` },
+            ]
+          : []),
+        { tag: "OK", text: generatedPath ? `created ${generatedPath}` : "completed tutorial run" },
+      ];
+    const terminalLogs = chatConfig.terminalLogs?.[key] ?? fallbackTerminalLogs;
 
     const thinkingDelay = 1200 + Math.random() * 800;
+    onTerminalLogs?.([]);
+    terminalLogs.forEach((_, index) => {
+      setTimeout(() => {
+        onTerminalLogs?.(terminalLogs.slice(0, index + 1));
+      }, 300 + index * 350);
+    });
 
     if (chatConfig.mode === "streaming") {
       setTimeout(() => {
@@ -131,15 +150,6 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
         }, 25);
       }, thinkingDelay);
     } else {
-      if (chatConfig.mode === "self-correction") {
-        onTerminalLogs?.([]);
-        terminalLogs.forEach((_, index) => {
-          setTimeout(() => {
-            onTerminalLogs?.(terminalLogs.slice(0, index + 1));
-          }, 300 + index * 350);
-        });
-      }
-
       setTimeout(() => {
         setLoading(false);
         setMessages((prev) => [...prev, ...response]);
@@ -338,12 +348,8 @@ export function InteractiveChatPanel({ chatConfig, onFileGenerated, onTerminalLo
               disabled={disabled || loading || !input.trim()}
               className="bg-ink text-night h-7 px-3 rounded text-[10px] font-bold uppercase hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
-              {chatConfig.mode === "self-correction" ? (
-                <Play className="w-3 h-3" />
-              ) : (
-                <Send className="w-3 h-3" />
-              )}
-              {loading ? "..." : chatConfig.mode === "self-correction" ? "EXECUTE" : "SEND"}
+              <Play className="w-3 h-3" />
+              {loading ? "..." : "EXECUTE"}
             </button>
           </div>
         </div>

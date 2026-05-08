@@ -22,6 +22,11 @@ export type CodeFile = {
   content: string;
 };
 
+export type WorkspaceFile = {
+  path: string;
+  content: string;
+};
+
 export type TraceStep = {
   type: "human" | "ai" | "tool";
   content: string;

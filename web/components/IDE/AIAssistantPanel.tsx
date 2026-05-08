@@ -1,9 +1,15 @@
 "use client";
 
-import { Bot, Paperclip, Image } from "lucide-react";
+import { Bot, Paperclip, Image, Play } from "lucide-react";
 import type { AIExchange } from "@/lib/schema";
 
-export function AIAssistantPanel({ exchange }: { exchange?: AIExchange }) {
+export function AIAssistantPanel({
+  exchange,
+  onExecute,
+}: {
+  exchange?: AIExchange;
+  onExecute?: () => void;
+}) {
   return (
     <aside className="w-80 bg-surface-container-low border-l border-outline-variant flex flex-col shrink-0">
       <div className="p-3 flex items-center gap-2 border-b border-outline-variant/20">
@@ -85,8 +91,12 @@ export function AIAssistantPanel({ exchange }: { exchange?: AIExchange }) {
                 <Image className="w-4 h-4" />
               </button>
             </div>
-            <button className="bg-ink text-night h-7 px-3 rounded text-[10px] font-bold uppercase hover:bg-white transition-colors">
-              SEND
+            <button
+              onClick={onExecute}
+              className="bg-ink text-night h-7 px-3 rounded text-[10px] font-bold uppercase hover:bg-white transition-colors flex items-center gap-1.5"
+            >
+              <Play className="w-3 h-3" />
+              EXECUTE
             </button>
           </div>
         </div>

@@ -12,6 +12,7 @@ type InlineEditConfig = {
   prompt?: string;
   generatedFile?: { filename: string; content: string };
   onApply: (filename: string, content: string) => void;
+  onTerminalLogs?: (logs: { tag: "PROCESS" | "TOOL" | "OK"; text: string }[]) => void;
 };
 
 function highlightPython(
@@ -171,11 +172,21 @@ export function CodePanel({
     if (!inlineEditConfig?.generatedFile || !editInput.trim() || isApplyingEdit) return;
 
     setIsApplyingEdit(true);
+    const path = `generated/${inlineEditConfig.generatedFile.filename}`;
+    inlineEditConfig.onTerminalLogs?.([
+      { tag: "PROCESS", text: "[inline-edit] apply selected edit" },
+      { tag: "TOOL", text: `write ${path}` },
+    ]);
     setTimeout(() => {
       inlineEditConfig.onApply(
         inlineEditConfig.generatedFile!.filename,
         inlineEditConfig.generatedFile!.content
       );
+      inlineEditConfig.onTerminalLogs?.([
+        { tag: "PROCESS", text: "[inline-edit] apply selected edit" },
+        { tag: "TOOL", text: `write ${path}` },
+        { tag: "OK", text: `updated ${path}` },
+      ]);
       setIsApplyingEdit(false);
       setShowInlineEdit(false);
     }, 800);
