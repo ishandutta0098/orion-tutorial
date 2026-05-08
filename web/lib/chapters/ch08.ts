@@ -44,6 +44,7 @@ print(f"Code:\\n{result.code}")`,
       raw: [
         {
           role: "assistant",
+          renderAs: "plain",
           content: `Certainly! Here's a Python function that checks if a number is prime:
 
 \`\`\`python
