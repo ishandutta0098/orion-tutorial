@@ -11,7 +11,7 @@ import { StatusFooter } from "./StatusFooter";
 import { TerminalLogPanel } from "./TerminalLogPanel";
 import { AgentGraphVisualizer } from "./AgentGraphVisualizer";
 import { useWorkspace } from "@/lib/WorkspaceContext";
-import type { ChapterDef, LogLine, WorkspaceFile } from "@/lib/schema";
+import type { ChapterDef, GraphRunStep, LogLine, WorkspaceFile } from "@/lib/schema";
 
 const SAMPLE_PROJECT_FILES: Record<string, string> = {
   "sample_project/app.py": `import streamlit as st
@@ -120,7 +120,8 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
   const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
   const [resetKey, setResetKey] = useState(0);
   const [activeView, setActiveView] = useState<ActivityView>("tutorials");
-  const [graphRunKey, setGraphRunKey] = useState(0);
+  const [graphActiveNode, setGraphActiveNode] = useState<string | null>(null);
+  const [graphSteps, setGraphSteps] = useState<GraphRunStep[]>([]);
 
   useEffect(() => {
     setWorkspaceFiles({
@@ -133,7 +134,8 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
     setDynamicFile(initialCode ? { filename: toGeneratedPath(initialCode.filename), content: initialCode.content } : null);
     setSelectedFilePath(null);
     setTerminalLogs([]);
-    setGraphRunKey(0);
+    setGraphActiveNode(null);
+    setGraphSteps([]);
   }, [chapter.slug, initialCode]);
 
   const handleFileGenerated = useCallback((filename: string, content: string) => {
@@ -163,7 +165,8 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
     setSelectedFilePath(null);
     setTerminalLogs([]);
     setResetKey((key) => key + 1);
-    setGraphRunKey(0);
+    setGraphActiveNode(null);
+    setGraphSteps([]);
   }, [chapter.slug, generatedFiles, initialCode, initialWorkspace, resetChapterFiles]);
 
   const handleProjectReset = useCallback(() => {
@@ -173,8 +176,19 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
     setSelectedFilePath(null);
     setTerminalLogs([]);
     setResetKey((key) => key + 1);
-    setGraphRunKey(0);
+    setGraphActiveNode(null);
+    setGraphSteps([]);
   }, [initialCode, initialWorkspace, resetAllGeneratedFiles]);
+
+  const handleGraphReset = useCallback(() => {
+    setGraphActiveNode(null);
+    setGraphSteps([]);
+  }, []);
+
+  const handleGraphStep = useCallback((step: GraphRunStep) => {
+    setGraphActiveNode(step.node);
+    setGraphSteps((steps) => [...steps, step]);
+  }, []);
 
   const handleStaticExecute = useCallback(() => {
     const targetFile = chapter.backendFilename
@@ -217,7 +231,12 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
         <main className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0">
             {chapter.chatConfig?.graphVisualization && (
-              <AgentGraphVisualizer runKey={graphRunKey} />
+              <AgentGraphVisualizer
+                nodes={chapter.chatConfig.graphNodes}
+                edges={chapter.chatConfig.graphEdges}
+                activeNode={graphActiveNode}
+                steps={graphSteps}
+              />
             )}
             <CodePanel
               code={shouldShowEmptyPanel ? undefined : code}
@@ -245,7 +264,8 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
               chatConfig={chapter.chatConfig!}
               onFileGenerated={handleFileGenerated}
               onTerminalLogs={setTerminalLogs}
-              onExecuteStart={() => setGraphRunKey((key) => key + 1)}
+              onGraphReset={handleGraphReset}
+              onGraphStep={handleGraphStep}
               resetKey={resetKey}
             />
           ) : !isInlineEdit ? (
