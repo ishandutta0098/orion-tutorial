@@ -4,8 +4,8 @@ export const ch09: ChapterDef = {
   slug: "self-correction",
   number: 9,
   notebook: "Notebook 02",
-  subtopicLabel: "2.2 Self-Correction",
-  title: "Code Execution & Self-Correction",
+  subtopicLabel: "2.2 Self Correction",
+  title: "Self Correction",
   subtitle: "Generate code, execute it, detect errors, and retry automatically.",
   cursorFeature: "Bugbot",
   designPatterns: ["Reflection", "Exception Handling"],
@@ -66,6 +66,85 @@ bugbot = graph.compile()`,
   backendFilename: "self_correction_graph.py",
   chatConfig: {
     mode: "self-correction",
+    graphVisualization: true,
+    graphNodes: [
+      { id: "__start__", label: "__start__" },
+      { id: "generate", label: "generate" },
+      { id: "execute", label: "execute" },
+      { id: "__end__", label: "__end__" },
+    ],
+    graphEdges: [
+      { from: "__start__", to: "generate" },
+      { from: "generate", to: "execute" },
+      { from: "execute", to: "generate", label: "retry", style: "dashed" },
+      { from: "execute", to: "__end__", label: "give_up", style: "dashed" },
+      { from: "execute", to: "__end__", label: "success" },
+    ],
+    animationSequence: ["__start__", "generate", "execute", "__end__"],
+    graphRunSteps: {
+      easy: [
+        {
+          node: "generate",
+          title: "Attempt 1",
+          detail: `Generated fibonacci.py
+def fibonacci(n): ...`,
+        },
+        {
+          node: "execute",
+          title: "Success",
+          detail: "stdout: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]",
+          status: "success",
+        },
+        {
+          node: "__end__",
+          title: "Done",
+          detail: "Task completed successfully in 1 attempt.",
+          status: "success",
+        },
+      ],
+      hard: [
+        {
+          node: "generate",
+          title: "Attempt 1",
+          detail: `from diffusers import StableDiffusionPipeline
+import torch`,
+        },
+        {
+          node: "execute",
+          title: "Failed",
+          detail: "ModuleNotFoundError: No module named 'diffusers'",
+          status: "error",
+        },
+        {
+          node: "generate",
+          title: "Attempt 2",
+          detail: "Regenerated with torch_dtype=torch.float16",
+        },
+        {
+          node: "execute",
+          title: "Failed",
+          detail: "ModuleNotFoundError: No module named 'diffusers'",
+          status: "error",
+        },
+        {
+          node: "generate",
+          title: "Attempt 3",
+          detail: "Added install guidance, but the sandbox still cannot import diffusers",
+        },
+        {
+          node: "execute",
+          title: "Give up",
+          detail: "Max attempts reached after repeated missing-package failures.",
+          status: "warning",
+        },
+        {
+          node: "__end__",
+          title: "Stopped",
+          detail: "The bounded retry loop ended without another chat-tool transcript.",
+          status: "warning",
+        },
+      ],
+    },
     tasks: [
       {
         id: "easy",
@@ -74,7 +153,7 @@ bugbot = graph.compile()`,
       },
       {
         id: "hard",
-        label: "Watching the Retry Loop",
+        label: "Hard Task",
         description: "Generate image with Stable Diffusion and watch retries fail on missing diffusers",
       },
     ],
