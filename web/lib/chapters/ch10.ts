@@ -4,6 +4,7 @@ export const ch10: ChapterDef = {
   slug: "reflection",
   number: 10,
   notebook: "Notebook 02",
+  subtopicLabel: "2.3 Reflection Pattern",
   title: "Reflection Pattern",
   subtitle: "Add a reviewer node that evaluates code quality after execution succeeds.",
   cursorFeature: "Bugbot",
