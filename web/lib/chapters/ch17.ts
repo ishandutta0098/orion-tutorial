@@ -4,6 +4,7 @@ export const ch17: ChapterDef = {
   slug: "parallel-generation",
   number: 17,
   notebook: "Notebook 03",
+  subtopicLabel: "3.5 Parallel Generation",
   title: "Parallel Code Generation",
   subtitle: "Fan out to per-file coders with the Send API for concurrent generation.",
   cursorFeature: "Agent Mode",
