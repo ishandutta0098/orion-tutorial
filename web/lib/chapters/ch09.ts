@@ -4,6 +4,7 @@ export const ch09: ChapterDef = {
   slug: "self-correction",
   number: 9,
   notebook: "Notebook 02",
+  subtopicLabel: "2.2 Self-Correction",
   title: "Code Execution & Self-Correction",
   subtitle: "Generate code, execute it, detect errors, and retry automatically.",
   cursorFeature: "Bugbot",
