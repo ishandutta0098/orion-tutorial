@@ -4,6 +4,7 @@ export const ch15: ChapterDef = {
   slug: "multi-agent",
   number: 15,
   notebook: "Notebook 03",
+  subtopicLabel: "3.3 Multi-Agent",
   title: "Multi-Agent: Planner, Coder, Reviewer",
   subtitle: "Specialist agents collaborating through shared state.",
   cursorFeature: "Agent Mode",
