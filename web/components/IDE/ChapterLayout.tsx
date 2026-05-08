@@ -129,6 +129,13 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
     });
   }, [globalWorkspaceFiles, initialWorkspace]);
 
+  useEffect(() => {
+    setDynamicFile(initialCode ? { filename: toGeneratedPath(initialCode.filename), content: initialCode.content } : null);
+    setSelectedFilePath(null);
+    setTerminalLogs([]);
+    setGraphRunKey(0);
+  }, [chapter.slug, initialCode]);
+
   const handleFileGenerated = useCallback((filename: string, content: string) => {
     const path = toGeneratedPath(filename);
     setDynamicFile({ filename: path, content });
