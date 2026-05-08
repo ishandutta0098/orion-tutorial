@@ -4,6 +4,7 @@ export const ch08: ChapterDef = {
   slug: "structured-output",
   number: 8,
   notebook: "Notebook 02",
+  subtopicLabel: "2.1 Structured Output",
   title: "Structured Output",
   subtitle: "Force the LLM to return Pydantic-validated JSON with with_structured_output.",
   cursorFeature: "Bugbot",
