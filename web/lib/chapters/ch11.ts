@@ -5,7 +5,7 @@ export const ch11: ChapterDef = {
   number: 11,
   notebook: "Notebook 02",
   subtopicLabel: "2.4 Dynamic Rules",
-  title: "Dynamic Rules Injection",
+  title: "Dynamic Rules",
   subtitle: "Inject coding rules at runtime — the .cursorrules equivalent for agents.",
   cursorFeature: "Cursor Rules",
   designPatterns: ["Prompt Chaining"],
@@ -56,6 +56,11 @@ result_with_rules = full_agent.invoke({
   chatConfig: {
     mode: "rules-toggle",
     defaultPrompt: "Write a function to sort a list of dictionaries by a given key. Test with sample data.",
+    rules: `- ALL functions must have type hints on parameters and return type
+- ALL functions must have a Google-style docstring
+- Use list comprehensions instead of loops where possible
+- Add if __name__ == '__main__' guard for test code
+- Variable names must be descriptive (no single letters except loop counters)`,
     conversations: {
       no_rules: [
         {
