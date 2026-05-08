@@ -4,6 +4,7 @@ export const ch06: ChapterDef = {
   slug: "streaming",
   number: 6,
   notebook: "Notebook 01",
+  subtopicLabel: "1.6 Streaming",
   title: "Streaming with astream_events",
   subtitle: "Stream tokens in real-time for a responsive agent experience.",
   cursorFeature: "Chat Mode",
@@ -43,7 +44,7 @@ await stream_agent(
       default: [
         {
           role: "tool",
-          content: "data_processor.py\ncalculator.py",
+          content: "calculator.py\ndata_processor.py",
           toolName: "list_directory",
           toolArgs: { directory: "generated" },
         },
@@ -55,7 +56,7 @@ await stream_agent(
         },
         {
           role: "assistant",
-          content: "### Files in the 'generated' directory\n- `data_processor.py`\n- `calculator.py`\n\n### Contents of `calculator.py`\n```python\nclass Calculator:\n    def __init__(self):\n        self.history = []\n\n    def add(self, a: float, b: float) -> float:\n        result = a + b\n        self.history.append(f'Added {a} + {b} = {result}')\n        return result\n\n    def subtract(self, a: float, b: float) -> float:\n        result = a - b\n        self.history.append(f'Subtracted {a} - {b} = {result}')\n        return result\n\n    def multiply(self, a: float, b: float) -> float:\n        result = a * b\n        self.history.append(f'Multiplied {a} * {b} = {result}')\n        return result\n\n    def divide(self, a: float, b: float) -> float:\n        if b == 0:\n            raise ValueError('Cannot divide by zero')\n        result = a / b\n        self.history.append(f'Divided {a} / {b} = {result}')\n        return result\n\n    def get_history(self) -> list[str]:\n        return self.history\n```",
+          content: "### Files in the Explorer's `generated` folder\n- `calculator.py`\n- `data_processor.py`\n\n### Contents of `calculator.py`\n```python\nclass Calculator:\n    def __init__(self):\n        self.history = []\n\n    def add(self, a: float, b: float) -> float:\n        result = a + b\n        self.history.append(f'Added {a} + {b} = {result}')\n        return result\n\n    def subtract(self, a: float, b: float) -> float:\n        result = a - b\n        self.history.append(f'Subtracted {a} - {b} = {result}')\n        return result\n\n    def multiply(self, a: float, b: float) -> float:\n        result = a * b\n        self.history.append(f'Multiplied {a} * {b} = {result}')\n        return result\n\n    def divide(self, a: float, b: float) -> float:\n        if b == 0:\n            raise ValueError('Cannot divide by zero')\n        result = a / b\n        self.history.append(f'Divided {a} / {b} = {result}')\n        return result\n\n    def get_history(self) -> list[str]:\n        return self.history\n```",
         },
       ],
     },
