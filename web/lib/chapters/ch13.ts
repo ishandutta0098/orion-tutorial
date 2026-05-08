@@ -4,6 +4,7 @@ export const ch13: ChapterDef = {
   slug: "codebase-rag",
   number: 13,
   notebook: "Notebook 03",
+  subtopicLabel: "3.1 Codebase RAG",
   title: "Codebase RAG with FAISS",
   subtitle: "Semantic search over your codebase — the @codebase and @file equivalent.",
   cursorFeature: "Agent Mode",
