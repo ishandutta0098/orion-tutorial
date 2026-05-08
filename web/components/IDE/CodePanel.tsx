@@ -149,7 +149,7 @@ export function CodePanel({
     if (!inlineEditConfig) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      if (event.metaKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSelection((current) => current ?? { start: 1, end: Math.min(4, activeCode.split("\n").length) });
         setShowInlineEdit(true);
@@ -197,7 +197,7 @@ export function CodePanel({
       <div className="flex bg-surface-container-low border-b border-outline-variant h-9 shrink-0">
         {!isEmpty && (
           <div className="px-3 flex items-center gap-2 bg-night border-r border-outline-variant">
-            <span className="font-headline text-[10px] font-bold tracking-wider uppercase text-white">
+            <span className="font-headline text-[10px] font-bold tracking-wider text-white">
               {activeFilename}
             </span>
             <X className="w-3 h-3 text-ink-variant hover:text-ink cursor-pointer" />
@@ -266,7 +266,7 @@ export function CodePanel({
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-outline-variant/30 px-2 py-1.5">
                   <span className="font-code text-[10px] text-ink-variant">
-                    Ctrl+K inline edit
+                    Command+K inline edit
                   </span>
                   <button
                     className="flex items-center gap-1.5 rounded bg-ink px-2 py-1 text-[10px] font-bold uppercase text-night disabled:opacity-40"
