@@ -142,15 +142,18 @@ export type ChatConfig = {
   defaultPrompt?: string;
   conversations: Record<string, ChatMessage[]>;
   generatedFile?: { filename: string; content: string };
+  turnFiles?: Record<string, { filename: string; content: string }>;
   initialCode?: { filename: string; content: string };
   terminalLogs?: Record<string, LogLine[]>;
   inlineEditPrompt?: string;
+  graphVisualization?: boolean;
 };
 
 export type ChapterDef = {
   slug: string;
   number: number;
   notebook: NotebookId;
+  subtopicLabel?: string;
   title: string;
   subtitle: string;
   intro: string;
