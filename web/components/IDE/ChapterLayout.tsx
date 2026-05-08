@@ -93,7 +93,12 @@ function toGeneratedPath(filename: string): string {
   return filename.includes("/") ? filename : `generated/${filename}`;
 }
 
-export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
+type ChapterLayoutProps = {
+  chapter: ChapterDef;
+  defaultView?: ActivityView;
+};
+
+export function ChapterLayout({ chapter, defaultView = "tutorials" }: ChapterLayoutProps) {
   const {
     generatedFiles,
     addGeneratedFile,
@@ -119,7 +124,7 @@ export function ChapterLayout({ chapter }: { chapter: ChapterDef }) {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<LogLine[]>([]);
   const [resetKey, setResetKey] = useState(0);
-  const [activeView, setActiveView] = useState<ActivityView>("tutorials");
+  const [activeView, setActiveView] = useState<ActivityView>(defaultView);
   const [graphActiveNode, setGraphActiveNode] = useState<string | null>(null);
   const [graphSteps, setGraphSteps] = useState<GraphRunStep[]>([]);
 
